@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://cqow47bch5ocs"]
+
+[ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://spell.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://dek33f36dr6qo" path="res://ollama_client.gd" id="2_h2yge"]
+[ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://aspects_library.gd" id="3_h2yge"]
+
+[node name="main" type="Node2D" unique_id=835171175]
+
+[node name="Button" type="Button" parent="." unique_id=111194602]
+offset_left = 891.0
+offset_top = 100.0
+offset_right = 963.0
+offset_bottom = 135.0
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=1454104504]
+offset_left = 225.0
+offset_top = 86.0
+offset_right = 864.0
+offset_bottom = 146.0
+
+[node name="spell" type="Node" parent="." unique_id=1431694673]
+script = ExtResource("2_0xm2m")
+line_edit_path = null
+ollama_client_path = null
+aspect_library_path = null
+
+[node name="OllamaClient" type="Node" parent="spell" unique_id=1540099008]
+script = ExtResource("2_h2yge")
+
+[node name="AspectLibrary" type="Node" parent="spell" unique_id=1790970580]
+script = ExtResource("3_h2yge")
+
+[connection signal="pressed" from="Button" to="spell" method="_on_button_pressed"]
