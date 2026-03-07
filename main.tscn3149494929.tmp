@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://cqow47bch5ocs"]
+
+[ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://spell.gd" id="2_0xm2m"]
+
+[node name="main" type="Node2D" unique_id=835171175]
+
+[node name="Button" type="Button" parent="." unique_id=111194602]
+offset_left = 891.0
+offset_top = 100.0
+offset_right = 963.0
+offset_bottom = 135.0
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=1454104504]
+offset_left = 225.0
+offset_top = 86.0
+offset_right = 864.0
+offset_bottom = 146.0
+
+[node name="spell" type="Node" parent="." unique_id=1431694673]
+script = ExtResource("2_0xm2m")
+
+[node name="HTTPRequest" type="HTTPRequest" parent="spell" unique_id=1779710584]
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="request_completed" from="spell/HTTPRequest" to="." method="_on_http_request_request_completed"]

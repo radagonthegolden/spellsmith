@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cqow47bch5ocs"]
+
+[ext_resource type="Script" uid="uid://uusxfhw2epny" path="res://button.gd" id="1_ig7tw"]
+
+[node name="main" type="Node2D" unique_id=835171175]
+
+[node name="Button" type="Button" parent="." unique_id=111194602]
+offset_left = 891.0
+offset_top = 100.0
+offset_right = 963.0
+offset_bottom = 135.0
+script = ExtResource("1_ig7tw")
+
+[node name="LineEdit" type="LineEdit" parent="." unique_id=1454104504]
+offset_left = 225.0
+offset_top = 86.0
+offset_right = 864.0
+offset_bottom = 146.0
+
+[connection signal="pressed" from="Button" to="Button" method="_on_pressed"]
