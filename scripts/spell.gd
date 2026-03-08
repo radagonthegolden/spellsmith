@@ -1,7 +1,7 @@
 extends Node
 class_name Spell
 
-signal spell_scored(sorted_scores: Array)
+signal spell_scored(sorted_scores: Array, text: String)
 
 @export var line_edit_path: NodePath = "../LineEdit"
 @export var ollama_client_path: NodePath = "OllamaClient"
@@ -37,7 +37,7 @@ func _on_spell_cast(text = null) -> void:
 	if sorted_scores.is_empty():
 		return
 
-	spell_scored.emit(sorted_scores)
+	spell_scored.emit(sorted_scores, cast_text)
 	print(sorted_scores)
 
 func _extract_cast_text(text: Variant) -> String:

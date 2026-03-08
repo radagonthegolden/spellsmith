@@ -3,6 +3,9 @@
 [ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://scripts/spell.gd" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://dek33f36dr6qo" path="res://scripts/ollama_client.gd" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://scripts/aspects_library.gd" id="3_h2yge"]
+[ext_resource type="Script" uid="uid://bwfs8fxn8l1qw" path="res://scripts/battler.gd" id="4_2wk8u"]
+[ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat_manager.gd" id="5_m3h8a"]
+[ext_resource type="PackedScene" path="res://scenes/battler_ui.tscn" id="6_2k3sj"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.109804, 0.129412, 0.176471, 0.88)
@@ -64,10 +67,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 36.0
-offset_top = 28.0
-offset_right = -36.0
-offset_bottom = -28.0
+offset_left = 56.0
+offset_top = 42.0
+offset_right = -56.0
+offset_bottom = -42.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -77,27 +80,50 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
 [node name="Content" type="VBoxContainer" parent="OuterMargin/Panel" unique_id=1199949935]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 18
 
 [node name="Title" type="Label" parent="OuterMargin/Panel/Content" unique_id=2046079035]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.854902, 0.913725, 1, 1)
-theme_override_font_sizes/font_size = 32
+theme_override_font_sizes/font_size = 44
 text = "Spellsmith Workbench"
 
 [node name="SubTitle" type="Label" parent="OuterMargin/Panel/Content" unique_id=429314954]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.639216, 0.717647, 0.858824, 1)
-theme_override_font_sizes/font_size = 15
-text = "Compose an incantation, then cast it to score its aspect affinity."
+theme_override_font_sizes/font_size = 20
+text = "Turn-based duel setup: monitor health, cast, and end turns."
+
+[node name="CombatHUD" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1817702334]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="PlayerCard" parent="OuterMargin/Panel/Content/CombatHUD" unique_id=1796960431 instance=ExtResource("6_2k3sj")]
+layout_mode = 2
+
+[node name="EnemyCard" parent="OuterMargin/Panel/Content/CombatHUD" unique_id=1478877382 instance=ExtResource("6_2k3sj")]
+layout_mode = 2
+
+[node name="TurnRow" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1716524441]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TurnLabel" type="Label" parent="OuterMargin/Panel/Content/TurnRow" unique_id=189333007]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.831373, 0.882353, 0.960784, 1)
+theme_override_font_sizes/font_size = 20
+text = "Turn: Player"
 
 [node name="InputRow" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1615776331]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 
 [node name="LineEdit" type="LineEdit" parent="OuterMargin/Panel/Content/InputRow" unique_id=1454104504]
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_input")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_input")
 theme_override_styles/focus = SubResource("StyleBoxFlat_input")
@@ -105,9 +131,10 @@ placeholder_text = "Type your spell here..."
 clear_button_enabled = true
 
 [node name="Button" type="Button" parent="OuterMargin/Panel/Content/InputRow" unique_id=111194602]
-custom_minimum_size = Vector2(120, 0)
+custom_minimum_size = Vector2(180, 64)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.941176, 0.972549, 1, 1)
+theme_override_font_sizes/font_size = 22
 theme_override_styles/normal = SubResource("StyleBoxFlat_button")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button")
@@ -117,9 +144,18 @@ text = "Send"
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.815686, 0.862745, 0.929412, 1)
-theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/normal_font_size = 22
 bbcode_enabled = true
-text = "Testing da game"
+scroll_active = true
+
+[node name="CombatManager" type="Node" parent="." unique_id=1916645604]
+script = ExtResource("5_m3h8a")
+
+[node name="PlayerBattler" type="Node" parent="CombatManager" unique_id=1112674722]
+script = ExtResource("4_2wk8u")
+
+[node name="OpponentBattler" type="Node" parent="CombatManager" unique_id=322087507]
+script = ExtResource("4_2wk8u")
 
 [node name="spell" type="Node" parent="." unique_id=1431694673]
 script = ExtResource("2_0xm2m")
@@ -133,3 +169,4 @@ script = ExtResource("3_h2yge")
 
 [connection signal="text_submitted" from="OuterMargin/Panel/Content/InputRow/LineEdit" to="spell" method="_on_spell_cast"]
 [connection signal="pressed" from="OuterMargin/Panel/Content/InputRow/Button" to="spell" method="_on_spell_cast"]
+[connection signal="spell_scored" from="spell" to="CombatManager" method="_on_spell_scored"]

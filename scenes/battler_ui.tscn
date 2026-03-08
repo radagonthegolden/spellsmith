@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/battler_ui.gd" id="1_uu4ld"]
+
+[node name="BattlerUI" type="VBoxContainer"]
+script = ExtResource("1_uu4ld")
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Combatant"
+
+[node name="HealthBar" type="ProgressBar" parent="."]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+max_value = 100.0
+value = 100.0
+
+[node name="HealthText" type="Label" parent="."]
+layout_mode = 2
+text = "HP: 100 / 100"
