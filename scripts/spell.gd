@@ -1,15 +1,12 @@
 extends Node
 class_name Spell
 
-signal spell_scored(sorted_scores: Array, text: String)
+signal spell_scored(sorted_scores: Array, text: String, cast_multiplier: float)
 
-@export var line_edit_path: NodePath = "../LineEdit"
-@export var ollama_client_path: NodePath = "OllamaClient"
-@export var aspect_library_path: NodePath = "AspectLibrary"
-
-@onready var spell_input: LineEdit = get_node_or_null(line_edit_path)
-@onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
-@onready var aspect_library: AspectLibrary = get_node_or_null(aspect_library_path)
+@onready var spell_input: LineEdit = $"../OuterMargin/Panel/Content/InputRow/LineEdit"
+@onready var ollama_client: OllamaClient = $OllamaClient
+@onready var aspect_library: AspectLibrary = $AspectLibrary
+@onready var usage_tracker: SpellUsageTracker = $SpellUsageTracker
 
 var loading := true
 var busy := false
@@ -37,7 +34,9 @@ func _on_spell_cast(text = null) -> void:
 	if sorted_scores.is_empty():
 		return
 
-	spell_scored.emit(sorted_scores, cast_text)
+	var cast_multiplier := usage_tracker.compute_multiplier_and_register(cast_text)
+	spell_scored.emit(sorted_scores, cast_text, cast_multiplier)
+	spell_input.text = ""
 	print(sorted_scores)
 
 func _extract_cast_text(text: Variant) -> String:
@@ -66,3 +65,6 @@ func _compute_sorted_scores(cast_text: String) -> Array:
 		return []
 
 	return sorted_scores
+
+func _on_purge_spell_usage_pressed() -> void:
+	usage_tracker.purge_usage()

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Lantern Ray",
+    "aspect": "Lantern",
+    "damage": 20
+  },
+  {
+    "name": "Winter Bite",
+    "aspect": "Winter",
+    "damage": 20
+  },
+  {
+    "name": "Knock Rift",
+    "aspect": "Knock",
+    "damage": 20
+  },
+  {
+    "name": "Forge Brand",
+    "aspect": "Forge",
+    "damage": 20
+  },
+  {
+    "name": "Grail Surge",
+    "aspect": "Grail",
+    "damage": 20
+  },
+  {
+    "name": "Moth Veil",
+    "aspect": "Moth",
+    "damage": 20
+  }
+]

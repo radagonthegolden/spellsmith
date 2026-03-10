@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://bwfs8fxn8l1qw" path="res://scripts/battler.gd" id="4_2wk8u"]
 [ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat_manager.gd" id="5_m3h8a"]
 [ext_resource type="PackedScene" path="res://scenes/battler_ui.tscn" id="6_2k3sj"]
+[ext_resource type="Script" path="res://scripts/spell_usage_tracker.gd" id="7_0dnga"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.109804, 0.129412, 0.176471, 0.88)
@@ -140,6 +141,16 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
 theme_override_styles/hover = SubResource("StyleBoxFlat_button")
 text = "Send"
 
+[node name="PurgeUsageButton" type="Button" parent="OuterMargin/Panel/Content/InputRow" unique_id=852592323]
+custom_minimum_size = Vector2(210, 64)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.941176, 0.972549, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_button")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button")
+text = "Purge Usage"
+
 [node name="LoreText" type="RichTextLabel" parent="OuterMargin/Panel/Content" unique_id=440863412]
 layout_mode = 2
 size_flags_vertical = 3
@@ -159,7 +170,6 @@ script = ExtResource("4_2wk8u")
 
 [node name="spell" type="Node" parent="." unique_id=1431694673]
 script = ExtResource("2_0xm2m")
-line_edit_path = NodePath("../OuterMargin/Panel/Content/InputRow/LineEdit")
 
 [node name="OllamaClient" type="Node" parent="spell" unique_id=1540099008]
 script = ExtResource("2_h2yge")
@@ -167,6 +177,10 @@ script = ExtResource("2_h2yge")
 [node name="AspectLibrary" type="Node" parent="spell" unique_id=1790970580]
 script = ExtResource("3_h2yge")
 
+[node name="SpellUsageTracker" type="Node" parent="spell" unique_id=162715377]
+script = ExtResource("7_0dnga")
+
 [connection signal="text_submitted" from="OuterMargin/Panel/Content/InputRow/LineEdit" to="spell" method="_on_spell_cast"]
 [connection signal="pressed" from="OuterMargin/Panel/Content/InputRow/Button" to="spell" method="_on_spell_cast"]
+[connection signal="pressed" from="OuterMargin/Panel/Content/InputRow/PurgeUsageButton" to="spell" method="_on_purge_spell_usage_pressed"]
 [connection signal="spell_scored" from="spell" to="CombatManager" method="_on_spell_scored"]
