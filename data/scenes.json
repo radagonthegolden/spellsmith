@@ -1,0 +1,93 @@
+[
+  {
+    "id": "antechamber",
+    "prose": "The manuscript opens in an antechamber of wet stone and black lacquered wood. A sealed door hums softly at the far wall. Beside it stands a watchful figure in lacquered wrappings, as still as a margin note waiting to become law.",
+    "default_reply": "The chamber receives your words without answer. The humming door continues its low note, and nothing in the room is persuaded to change.",
+    "intents": [
+      {
+        "phrases": [
+          "walk to the sealed door",
+          "approach the humming door",
+          "go to the figure by the door",
+          "step toward the watcher"
+        ],
+        "response": "Your footsteps gather in the grain of the page. The figure lifts its head. The humming in the door resolves into a name you almost remember.",
+        "next_scene": "threshold"
+      },
+      {
+        "phrases": [
+          "study the room",
+          "inspect the antechamber",
+          "look around carefully",
+          "examine the door and the figure"
+        ],
+        "response": "The room offers no furniture, no shelter, no ornament beyond the door and its sentinel. It is a place built entirely for passage or refusal.",
+        "next_scene": "antechamber"
+      }
+    ]
+  },
+  {
+    "id": "threshold",
+    "prose": "Up close, the sentinel is not a statue but a person preserved inside ritual stillness. Its voice arrives as if written just before your eyes: 'If you would pass, write your will clearly enough to wound me with it.'",
+    "default_reply": "The sentinel does not react. Its stillness remains exact, as if your words slid across varnish without finding purchase.",
+    "intents": [
+      {
+        "phrases": [
+          "challenge the sentinel",
+          "tell it to let me pass",
+          "declare that I will fight",
+          "say I am ready"
+        ],
+        "response": "The sentinel bows once, as though acknowledging a formal citation. The chamber tightens around the coming exchange.",
+        "start_combat": true,
+        "enemy_name": "Threshold Sentinel",
+        "victory_scene": "after_victory",
+        "defeat_scene": "after_defeat"
+      },
+      {
+        "phrases": [
+          "ask who it is",
+          "ask its name",
+          "speak gently to the sentinel",
+          "question the watcher"
+        ],
+        "response": "'I am only the sentence between you and the next chamber,' it replies. 'Write through me if you can.'",
+        "next_scene": "threshold"
+      }
+    ]
+  },
+  {
+    "id": "after_victory",
+    "prose": "The sentinel comes apart into flakes of ash and punctuation. The sealed door exhales and yields inward. Beyond it waits another page, still blank, still listening.",
+    "default_reply": "The open threshold waits. Your words scatter into the larger silence beyond the door, but the page does not yet turn.",
+    "intents": [
+      {
+        "phrases": [
+          "step through the door",
+          "continue onward",
+          "enter the next chamber",
+          "go forward"
+        ],
+        "response": "For now the manuscript closes just as you cross the threshold, preserving the next room for a later hand.",
+        "next_scene": "after_victory"
+      }
+    ]
+  },
+  {
+    "id": "after_defeat",
+    "prose": "Your words unravel under the sentinel's reply. The chamber dims. Ink gathers at the edges of the page until only the memory of the door remains.",
+    "default_reply": "The darkness holds. Nothing reforms from what you wrote, and the page stays heavy with defeat.",
+    "intents": [
+      {
+        "phrases": [
+          "begin again",
+          "wake up and try once more",
+          "return to the chamber",
+          "start over"
+        ],
+        "response": "A fresh line is drawn. The manuscript allows another beginning.",
+        "next_scene": "antechamber"
+      }
+    ]
+  }
+]
