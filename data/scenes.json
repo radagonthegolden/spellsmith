@@ -2,6 +2,7 @@
   {
     "id": "antechamber",
     "prose": "The manuscript opens in an antechamber of wet stone and black lacquered wood. A sealed door hums softly at the far wall. Beside it stands a watchful figure in lacquered wrappings, as still as a margin note waiting to become law.",
+    "prompt": "Approach the door, address the watcher, or study the chamber...",
     "default_reply": "The chamber receives your words without answer. The humming door continues its low note, and nothing in the room is persuaded to change.",
     "intents": [
       {
@@ -29,6 +30,7 @@
   {
     "id": "threshold",
     "prose": "Up close, the sentinel is not a statue but a person preserved inside ritual stillness. Its voice arrives as if written just before your eyes: 'If you would pass, write your will clearly enough to wound me with it.'",
+    "prompt": "Challenge the sentinel, question it, or answer its demand...",
     "default_reply": "The sentinel does not react. Its stillness remains exact, as if your words slid across varnish without finding purchase.",
     "intents": [
       {
@@ -59,6 +61,7 @@
   {
     "id": "after_victory",
     "prose": "The sentinel comes apart into flakes of ash and punctuation. The sealed door exhales and yields inward. Beyond it waits another page, still blank, still listening.",
+    "prompt": "Step through the opened door or linger at the threshold...",
     "default_reply": "The open threshold waits. Your words scatter into the larger silence beyond the door, but the page does not yet turn.",
     "intents": [
       {
@@ -76,6 +79,7 @@
   {
     "id": "after_defeat",
     "prose": "Your words unravel under the sentinel's reply. The chamber dims. Ink gathers at the edges of the page until only the memory of the door remains.",
+    "prompt": "Begin again, return to the chamber, or try to wake...",
     "default_reply": "The darkness holds. Nothing reforms from what you wrote, and the page stays heavy with defeat.",
     "intents": [
       {

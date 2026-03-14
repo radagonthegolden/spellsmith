@@ -9,43 +9,48 @@
 [ext_resource type="Script" path="res://scripts/core/spell_usage_tracker.gd" id="7_0dnga"]
 [ext_resource type="Script" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.109804, 0.129412, 0.176471, 0.88)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_shadow"]
+bg_color = Color(0.0823529, 0.0588235, 0.0352941, 0.82)
+corner_radius_top_left = 22
+corner_radius_top_right = 22
+corner_radius_bottom_right = 22
+corner_radius_bottom_left = 22
+shadow_color = Color(0, 0, 0, 0.24)
+shadow_size = 24
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page"]
+bg_color = Color(0.933333, 0.890196, 0.796078, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.337255, 0.47451, 0.760784, 0.95)
-corner_radius_top_left = 16
-corner_radius_top_right = 16
-corner_radius_bottom_right = 16
-corner_radius_bottom_left = 16
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 8
+border_color = Color(0.478431, 0.372549, 0.227451, 0.8)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_manuscript"]
+bg_color = Color(0.964706, 0.933333, 0.862745, 0.56)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_input"]
-bg_color = Color(0.0901961, 0.101961, 0.137255, 0.95)
+bg_color = Color(0.968627, 0.941176, 0.882353, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.286275, 0.368627, 0.560784, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+border_color = Color(0.45098, 0.341176, 0.2, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button"]
-bg_color = Color(0.266667, 0.439216, 0.788235, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.0823529, 0.145098, 0.27451, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hidden"]
+bg_color = Color(0, 0, 0, 0)
 
 [node name="main" type="Control" unique_id=835171175]
 layout_mode = 3
@@ -62,103 +67,125 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0392157, 0.0509804, 0.0784314, 1)
+color = Color(0.145098, 0.101961, 0.0705882, 1)
 
 [node name="OuterMargin" type="MarginContainer" parent="." unique_id=253518667]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 56.0
-offset_top = 42.0
-offset_right = -56.0
-offset_bottom = -42.0
+offset_left = 130.0
+offset_top = 20.0
+offset_right = -130.0
+offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="PanelContainer" parent="OuterMargin" unique_id=386357625]
+[node name="ShadowPanel" type="PanelContainer" parent="OuterMargin" unique_id=194501675]
 layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+theme_override_styles/panel = SubResource("StyleBoxFlat_page_shadow")
 
-[node name="Content" type="VBoxContainer" parent="OuterMargin/Panel" unique_id=1199949935]
+[node name="Panel" type="PanelContainer" parent="OuterMargin/ShadowPanel" unique_id=386357625]
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_page")
+
+[node name="Content" type="VBoxContainer" parent="OuterMargin/ShadowPanel/Panel" unique_id=1199949935]
+layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 18
 
-[node name="Title" type="Label" parent="OuterMargin/Panel/Content" unique_id=2046079035]
+[node name="PageMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content" unique_id=901144824]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.854902, 0.913725, 1, 1)
-theme_override_font_sizes/font_size = 44
-text = "Spellsmith Workbench"
+size_flags_vertical = 3
+theme_override_constants/margin_left = 46
+theme_override_constants/margin_top = 38
+theme_override_constants/margin_right = 46
+theme_override_constants/margin_bottom = 22
 
-[node name="SubTitle" type="Label" parent="OuterMargin/Panel/Content" unique_id=429314954]
+[node name="LoreFrame" type="PanelContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin" unique_id=412455161]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.639216, 0.717647, 0.858824, 1)
-theme_override_font_sizes/font_size = 20
-text = "Turn-based duel setup: monitor health, cast, and end turns."
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_manuscript")
 
-[node name="CombatHUD" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1817702334]
+[node name="LoreMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame" unique_id=189000616]
 layout_mode = 2
-theme_override_constants/separation = 24
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 30
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 30
 
-[node name="PlayerCard" parent="OuterMargin/Panel/Content/CombatHUD" unique_id=1796960431 instance=ExtResource("6_2k3sj")]
+[node name="LoreText" type="RichTextLabel" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame/LoreMargin" unique_id=440863412]
 layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.172549, 0.117647, 0.0705882, 1)
+theme_override_font_sizes/normal_font_size = 26
+bbcode_enabled = true
+scroll_active = true
+selection_enabled = true
 
-[node name="EnemyCard" parent="OuterMargin/Panel/Content/CombatHUD" unique_id=1478877382 instance=ExtResource("6_2k3sj")]
+[node name="InputRow" type="HBoxContainer" parent="OuterMargin/ShadowPanel/Panel/Content" unique_id=1615776331]
 layout_mode = 2
+theme_override_constants/separation = 0
 
-[node name="TurnRow" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1716524441]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="TurnLabel" type="Label" parent="OuterMargin/Panel/Content/TurnRow" unique_id=189333007]
+[node name="InputMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content/InputRow" unique_id=412002913]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.831373, 0.882353, 0.960784, 1)
-theme_override_font_sizes/font_size = 20
-text = "Turn: Player"
+theme_override_constants/margin_left = 46
+theme_override_constants/margin_right = 46
+theme_override_constants/margin_bottom = 34
 
-[node name="InputRow" type="HBoxContainer" parent="OuterMargin/Panel/Content" unique_id=1615776331]
-layout_mode = 2
-theme_override_constants/separation = 14
-
-[node name="LineEdit" type="LineEdit" parent="OuterMargin/Panel/Content/InputRow" unique_id=1454104504]
-custom_minimum_size = Vector2(0, 64)
+[node name="LineEdit" type="LineEdit" parent="OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin" unique_id=1454104504]
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.180392, 0.121569, 0.0627451, 1)
+theme_override_colors/font_placeholder_color = Color(0.388235, 0.301961, 0.184314, 0.72)
+theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_input")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_input")
 theme_override_styles/focus = SubResource("StyleBoxFlat_input")
-placeholder_text = "Type your spell here..."
+keep_editing_on_text_submit = true
+placeholder_text = "Write the next line..."
 clear_button_enabled = true
 
-[node name="Button" type="Button" parent="OuterMargin/Panel/Content/InputRow" unique_id=111194602]
-custom_minimum_size = Vector2(180, 64)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.941176, 0.972549, 1, 1)
-theme_override_font_sizes/font_size = 22
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button")
-text = "Send"
+[node name="HiddenUi" type="Control" parent="." unique_id=1134265121]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="PurgeUsageButton" type="Button" parent="OuterMargin/Panel/Content/InputRow" unique_id=852592323]
-custom_minimum_size = Vector2(210, 64)
+[node name="TurnRow" type="HBoxContainer" parent="HiddenUi" unique_id=1716524441]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.941176, 0.972549, 1, 1)
-theme_override_font_sizes/font_size = 20
-theme_override_styles/normal = SubResource("StyleBoxFlat_button")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_button")
-theme_override_styles/hover = SubResource("StyleBoxFlat_button")
-text = "Purge Usage"
 
-[node name="LoreText" type="RichTextLabel" parent="OuterMargin/Panel/Content" unique_id=440863412]
+[node name="TurnLabel" type="Label" parent="HiddenUi/TurnRow" unique_id=189333007]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_colors/default_color = Color(0.815686, 0.862745, 0.929412, 1)
-theme_override_font_sizes/normal_font_size = 22
-bbcode_enabled = true
-scroll_active = true
+text = "Turn: Player"
+
+[node name="CombatHUD" type="HBoxContainer" parent="HiddenUi" unique_id=1817702334]
+layout_mode = 2
+
+[node name="PlayerCard" parent="HiddenUi/CombatHUD" unique_id=1796960431 instance=ExtResource("6_2k3sj")]
+layout_mode = 2
+
+[node name="EnemyCard" parent="HiddenUi/CombatHUD" unique_id=1478877382 instance=ExtResource("6_2k3sj")]
+layout_mode = 2
+
+[node name="Button" type="Button" parent="HiddenUi" unique_id=111194602]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
+text = "Write"
+
+[node name="PurgeUsageButton" type="Button" parent="HiddenUi" unique_id=852592323]
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
+text = "Purge Ink"
 
 [node name="CombatManager" type="Node" parent="." unique_id=1916645604]
 script = ExtResource("5_m3h8a")
@@ -184,7 +211,7 @@ script = ExtResource("3_h2yge")
 [node name="SpellUsageTracker" type="Node" parent="spell" unique_id=162715377]
 script = ExtResource("7_0dnga")
 
-[connection signal="text_submitted" from="OuterMargin/Panel/Content/InputRow/LineEdit" to="SceneDirector" method="_on_player_submitted"]
-[connection signal="pressed" from="OuterMargin/Panel/Content/InputRow/Button" to="SceneDirector" method="_on_player_submitted"]
-[connection signal="pressed" from="OuterMargin/Panel/Content/InputRow/PurgeUsageButton" to="spell" method="_on_purge_spell_usage_pressed"]
+[connection signal="text_submitted" from="OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit" to="SceneDirector" method="_on_player_submitted"]
+[connection signal="pressed" from="HiddenUi/Button" to="SceneDirector" method="_on_player_submitted"]
+[connection signal="pressed" from="HiddenUi/PurgeUsageButton" to="spell" method="_on_purge_spell_usage_pressed"]
 [connection signal="spell_scored" from="spell" to="CombatManager" method="_on_spell_scored"]

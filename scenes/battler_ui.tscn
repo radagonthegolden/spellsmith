@@ -2,22 +2,64 @@
 
 [ext_resource type="Script" path="res://scripts/ui/battler_ui.gd" id="1_uu4ld"]
 
-[node name="BattlerUI" type="VBoxContainer"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.835294, 0.776471, 0.65098, 0.82)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.411765, 0.301961, 0.152941, 0.8)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(0.490196, 0.227451, 0.121569, 0.95)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.372549, 0.305882, 0.211765, 0.3)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="BattlerUI" type="PanelContainer"]
 script = ExtResource("1_uu4ld")
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
-[node name="NameLabel" type="Label" parent="."]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="Content" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.231373, 0.152941, 0.0823529, 1)
+theme_override_font_sizes/font_size = 19
 text = "Combatant"
 
-[node name="HealthBar" type="ProgressBar" parent="."]
+[node name="HealthBar" type="ProgressBar" parent="Margin/Content"]
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+theme_override_styles/background = SubResource("StyleBoxFlat_bg")
 max_value = 100.0
 value = 100.0
 
-[node name="HealthText" type="Label" parent="."]
+[node name="HealthText" type="Label" parent="Margin/Content"]
 layout_mode = 2
+theme_override_colors/font_color = Color(0.309804, 0.223529, 0.129412, 1)
+theme_override_font_sizes/font_size = 16
 text = "HP: 100 / 100"

@@ -18,12 +18,12 @@ signal combat_finished(player_won: bool)
 @onready var player: Battler = $PlayerBattler
 @onready var opponent: Battler = $OpponentBattler
 
-@onready var player_ui: BattlerUI = $"../OuterMargin/Panel/Content/CombatHUD/PlayerCard"
-@onready var opponent_ui: BattlerUI = $"../OuterMargin/Panel/Content/CombatHUD/EnemyCard"
-@onready var turn_label: Label = $"../OuterMargin/Panel/Content/TurnRow/TurnLabel"
-@onready var battle_log: RichTextLabel = $"../OuterMargin/Panel/Content/LoreText"
-@onready var combat_hud: HBoxContainer = $"../OuterMargin/Panel/Content/CombatHUD"
-@onready var turn_row: HBoxContainer = $"../OuterMargin/Panel/Content/TurnRow"
+@onready var player_ui: BattlerUI = $"../HiddenUi/CombatHUD/PlayerCard"
+@onready var opponent_ui: BattlerUI = $"../HiddenUi/CombatHUD/EnemyCard"
+@onready var turn_label: Label = $"../HiddenUi/TurnRow/TurnLabel"
+@onready var battle_log: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame/LoreMargin/LoreText"
+@onready var combat_hud: HBoxContainer = $"../HiddenUi/CombatHUD"
+@onready var turn_row: HBoxContainer = $"../HiddenUi/TurnRow"
 
 var enemy_spell_pool: Array[Dictionary] = []
 var enemy_current_aspect: String = ""
@@ -152,5 +152,5 @@ func _finish_battle(player_won: bool) -> void:
 	combat_finished.emit(player_won)
 
 func _set_ui_visible(value: bool) -> void:
-	combat_hud.visible = value
-	turn_row.visible = value
+	combat_hud.visible = false
+	turn_row.visible = false

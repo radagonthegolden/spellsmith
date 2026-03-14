@@ -5,8 +5,10 @@ class_name SceneDirector
 @export var start_scene_id: String = "antechamber"
 @export var exit_match_threshold: float = 0.28
 
-@onready var spell_input: LineEdit = $"../OuterMargin/Panel/Content/InputRow/LineEdit"
-@onready var manuscript: RichTextLabel = $"../OuterMargin/Panel/Content/LoreText"
+const DEFAULT_PROMPT: String = "Write the next line..."
+
+@onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
+@onready var manuscript: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame/LoreMargin/LoreText"
 @onready var combat_manager: CombatManager = $"../CombatManager"
 @onready var spell: Spell = $"../spell"
 @onready var ollama_client: OllamaClient = $"../spell/OllamaClient"
@@ -23,6 +25,7 @@ func _ready() -> void:
 	await _initialize_intent_embeddings()
 	manuscript.clear()
 	_show_scene(start_scene_id)
+	spell_input.grab_focus()
 
 func _on_player_submitted(text = null) -> void:
 	var submitted_text: String = _extract_text(text)
@@ -30,7 +33,7 @@ func _on_player_submitted(text = null) -> void:
 		return
 
 	if combat_manager.active:
-		spell._on_spell_cast(submitted_text)
+		await spell._on_spell_cast(submitted_text)
 		return
 
 	spell_input.text = ""
@@ -83,6 +86,7 @@ func _on_combat_finished(player_won: bool) -> void:
 func _show_scene(scene_id: String) -> void:
 	current_scene_id = scene_id
 	var scene: Dictionary = scenes_by_id[scene_id]
+	spell_input.placeholder_text = str(scene.get("prompt", DEFAULT_PROMPT))
 	_append_paragraph(str(scene["prose"]))
 
 func _append_paragraph(text: String) -> void:

@@ -1,9 +1,9 @@
-extends VBoxContainer
+extends PanelContainer
 class_name BattlerUI
 
-@onready var name_label: Label = $NameLabel
-@onready var health_bar: ProgressBar = $HealthBar
-@onready var health_text: Label = $HealthText
+@onready var name_label: Label = $Margin/Content/NameLabel
+@onready var health_bar: ProgressBar = $Margin/Content/HealthBar
+@onready var health_text: Label = $Margin/Content/HealthText
 
 func set_name_text(value: String) -> void:
 	name_label.text = value

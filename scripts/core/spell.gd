@@ -3,7 +3,7 @@ class_name Spell
 
 signal spell_scored(sorted_scores: Array, text: String, cast_multiplier: float)
 
-@onready var spell_input: LineEdit = $"../OuterMargin/Panel/Content/InputRow/LineEdit"
+@onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
 @onready var ollama_client: OllamaClient = $OllamaClient
 @onready var aspect_library: AspectLibrary = $AspectLibrary
 @onready var usage_tracker: SpellUsageTracker = $SpellUsageTracker
