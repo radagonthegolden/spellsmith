@@ -98,6 +98,27 @@ static func add_vectors(a: Array, b: Array) -> Array:
 
 	return out
 
+static func normalize_vector(vector: Array) -> Array:
+	if vector.is_empty():
+		return []
+
+	var norm: float = 0.0
+	for value in vector:
+		var scalar: float = float(value)
+		norm += scalar * scalar
+
+	if norm <= 0.0:
+		return zero_vector(vector.size())
+
+	var inv_norm: float = 1.0 / sqrt(norm)
+	var out: Array = []
+	out.resize(vector.size())
+
+	for i in range(vector.size()):
+		out[i] = float(vector[i]) * inv_norm
+
+	return out
+
 static func zero_vector(size: int) -> Array:
 	var out: Array = []
 	out.resize(size)

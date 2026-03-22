@@ -44,7 +44,7 @@
       "Its body is tiled in cracked mosaic and damp with half-living condensation.",
       "It does not hate intruders; it simply treats unsanctioned entry as a failure of form."
     ],
-    "min_descriptor_resonance": 0.45,
+    "min_descriptor_resonance": 0.65,
     "max_descriptor_resonance": 1.0,
     "player_victory_conditions": [
       {

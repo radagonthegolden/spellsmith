@@ -4,11 +4,12 @@ class_name CombatManager
 signal combat_finished(player_won: bool)
 
 const INTENSITY_LOW_THRESHOLD: float = 0.12
-const INTENSITY_MEDIUM_THRESHOLD: float = 0.17
+const INTENSITY_MEDIUM_THRESHOLD: float = 0.18
 const INTENSITY_HIGH_THRESHOLD: float = 0.21
 
 @export var enemies_file_path: String = "res://data/enemies.json"
 @export var progress_aspect_count: int = 3
+@export var context_max_value: int = 6
 
 @onready var player: Battler = $PlayerBattler
 @onready var opponent: Battler = $OpponentBattler
@@ -28,12 +29,13 @@ var enemy_definitions_by_name: Dictionary = {}
 var active: bool = false
 var current_enemy: Dictionary = {}
 var descriptor_vector: Array = []
-var context_vector: Array = []
+var context_aspect_totals: Dictionary = {}
 var current_aspect_scores: Array = []
 var prepared_enemy_spell: Dictionary = {}
 var last_player_spell_name: String = ""
 var last_player_resonance: float = 0.0
 var last_player_profile: Array = []
+var last_context_update: Dictionary = {}
 var last_defense_summary: String = ""
 
 func _ready() -> void:
@@ -57,12 +59,13 @@ func start_battle(enemy_name: String = "Enemy") -> void:
 	_update_health_ui()
 	current_enemy = enemy
 	descriptor_vector = descriptor
-	context_vector = SemanticScorer.zero_vector(descriptor_vector.size())
+	_reset_context_aspect_totals()
 	current_aspect_scores = []
 	prepared_enemy_spell = {}
 	last_player_spell_name = ""
 	last_player_resonance = 0.0
 	last_player_profile = []
+	last_context_update = {}
 	last_defense_summary = "The duel has just begun."
 	turn_label.text = "Turn: Player"
 	_set_ui_visible(true)
@@ -81,14 +84,7 @@ func _on_spell_encoded(spell_embedding: Array, text: String) -> void:
 	var spell_aspect_scores: Array = aspect_library.score_embedding(spell_embedding, text)
 	var resonance: float = SemanticScorer.cosine_similarity(spell_embedding, descriptor_vector)
 	var effective_resonance: float = _get_effective_resonance(resonance)
-	var scaled_spell: Array = SemanticScorer.scale_vector(spell_embedding, effective_resonance)
-	var next_context: Array = SemanticScorer.add_vectors(context_vector, scaled_spell)
-	if next_context.is_empty():
-		push_error("Failed to add spell vector to combat context")
-		return
-
-	context_vector = next_context
-	_score_context()
+	last_context_update = _apply_spell_to_context(spell_aspect_scores, effective_resonance)
 
 	var player_profile: Array = _build_full_intensity_profile(spell_aspect_scores)
 	last_player_spell_name = text
@@ -166,8 +162,31 @@ func _get_effective_resonance(raw_resonance: float) -> float:
 	var clamped_raw: float = clampf(raw_resonance, 0.0, 1.0)
 	return lerpf(min_resonance, max_resonance, clamped_raw)
 
+func _reset_context_aspect_totals() -> void:
+	context_aspect_totals.clear()
+	for aspect_name in aspect_library.get_aspect_names():
+		context_aspect_totals[str(aspect_name)] = 0
+
+func _apply_spell_to_context(spell_aspect_scores: Array, resonance: float) -> Dictionary:
+	var context_update: Dictionary = _build_context_update(spell_aspect_scores, resonance)
+	for aspect_name in context_aspect_totals.keys():
+		var current_value: int = int(context_aspect_totals[aspect_name])
+		var update_value: int = int(context_update.get(aspect_name, 0))
+		context_aspect_totals[aspect_name] = _update_context_aspect_value(current_value, update_value)
+
+	_score_context()
+	return context_update
+
 func _score_context() -> void:
-	current_aspect_scores = aspect_library.score_embedding(context_vector)
+	var scores: Array = []
+	for aspect_name in context_aspect_totals.keys():
+		scores.append({
+			"name": aspect_name,
+			"score": int(context_aspect_totals[aspect_name])
+		})
+
+	scores.sort_custom(func(a, b): return a["score"] > b["score"])
+	current_aspect_scores = scores
 
 func _log_progress() -> void:
 	return
@@ -304,15 +323,81 @@ func _format_context_profile() -> String:
 	for i in range(limit):
 		var entry: Dictionary = current_aspect_scores[i]
 		var aspect_name: String = str(entry["name"])
-		var intensity_label: String = _score_to_intensity_label(float(entry["score"]))
+		var intensity_label: String = _context_value_to_intensity_label(int(entry["score"]))
 		parts.append(aspect_name + " " + intensity_label)
 	return ", ".join(parts)
 
 func _get_context_intensity_rank(aspect_name: String) -> int:
 	for entry in current_aspect_scores:
 		if str(entry["name"]) == aspect_name:
-			return _score_to_intensity_rank(float(entry["score"]))
+			return _context_value_to_intensity_rank(int(entry["score"]))
 	return 0
+
+func _build_context_update(spell_aspect_scores: Array, resonance: float) -> Dictionary:
+	var update: Dictionary = {}
+	for aspect_name in aspect_library.get_aspect_names():
+		update[str(aspect_name)] = 0
+
+	for entry in spell_aspect_scores:
+		var aspect_name: String = str(entry["name"])
+		var effective_score: float = resonance * float(entry["score"])
+		update[aspect_name] = _score_to_intensity_rank(effective_score)
+
+	return update
+
+func _update_context_aspect_value(current_value: int, update_value: int) -> int:
+	var delta: int = 0
+	if update_value == 0:
+		if current_value <= 1:
+			delta = 0
+		elif current_value <= 3:
+			delta = -1
+		else:
+			delta = -2
+	elif update_value == 1:
+		if current_value <= 3:
+			delta = 1
+		else:
+			delta = 0
+	else:
+		if current_value <= 1:
+			delta = 2
+		else:
+			delta = 1
+
+	return clampi(current_value + delta, 0, context_max_value)
+
+func _context_value_to_intensity_rank(value: int) -> int:
+	if value >= 6:
+		return 3
+	if value >= 4:
+		return 2
+	if value >= 2:
+		return 1
+	return 0
+
+func _context_value_to_intensity_label(value: int) -> String:
+	var intensity_rank: int = _context_value_to_intensity_rank(value)
+	if intensity_rank == 3:
+		return "high"
+	if intensity_rank == 2:
+		return "medium"
+	if intensity_rank == 1:
+		return "low"
+	return "faint"
+
+func _format_context_update(update: Dictionary) -> String:
+	var parts: Array = []
+	for aspect_name in aspect_library.get_aspect_names():
+		var update_value: int = int(update.get(str(aspect_name), 0))
+		if update_value <= 0:
+			continue
+		parts.append("%s +%d" % [str(aspect_name), update_value])
+
+	if parts.is_empty():
+		return "No aspect gained pressure."
+
+	return ", ".join(parts)
 
 func _player_nullifies_enemy_spell(enemy_profile: Array, player_profile: Array) -> bool:
 	if enemy_profile.is_empty() or player_profile.is_empty():
@@ -378,6 +463,7 @@ func _refresh_fight_notes() -> void:
 		lines.append(last_player_spell_name)
 		lines.append("Pattern: " + _format_intensity_profile(_filter_display_profile(last_player_profile, prepared_enemy_spell.get("_intensity_profile", []))))
 		lines.append("Resonance: " + str(snappedf(last_player_resonance, 0.01)))
+		lines.append("Context Update: " + _format_context_update(last_context_update))
 	lines.append("")
 	lines.append("[b]Context[/b]")
 	lines.append(_format_context_profile())
@@ -392,12 +478,13 @@ func _finish_battle(player_won: bool) -> void:
 	active = false
 	current_enemy = {}
 	descriptor_vector.clear()
-	context_vector.clear()
+	context_aspect_totals.clear()
 	current_aspect_scores.clear()
 	prepared_enemy_spell = {}
 	last_player_spell_name = ""
 	last_player_resonance = 0.0
 	last_player_profile = []
+	last_context_update = {}
 	last_defense_summary = ""
 	fight_notes.text = ""
 	_set_ui_visible(false)
