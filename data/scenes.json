@@ -42,7 +42,7 @@
         ],
         "response": "The sentinel bows once, as though acknowledging a formal citation. The chamber tightens around the coming exchange.",
         "start_combat": true,
-        "enemy_name": "Threshold Sentinel",
+        "enemy_name": "Bathhouse Admitter",
         "victory_scene": "after_victory",
         "defeat_scene": "after_defeat"
       },

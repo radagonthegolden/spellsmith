@@ -3,15 +3,20 @@ class_name AspectLibrary
 
 @export var aspects_file_path: String = "res://data/aspects.json"
 @export var ollama_client_path: NodePath = "../OllamaClient"
+@export var length_penalty_reference_words: float = 4.0
+@export var length_penalty_sqrt_scale: float = 1.0
+@export var length_penalty_min_factor: float = 0.5
 
 @onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
 
 var aspect_vectors: Dictionary = {}
+var aspect_names: PackedStringArray = PackedStringArray()
 var is_ready: bool = false
 
 func initialize() -> bool:
 	is_ready = false
 	aspect_vectors.clear()
+	aspect_names = PackedStringArray()
 
 	var raw_aspect_data := _load_aspect_descriptions(aspects_file_path)
 	if raw_aspect_data.is_empty():
@@ -27,14 +32,25 @@ func initialize() -> bool:
 
 		aspect_vectors[aspect_name_text] = aspect_embedding
 
+	var sorted_names: Array = aspect_vectors.keys()
+	sorted_names.sort()
+	aspect_names = PackedStringArray(sorted_names)
 	is_ready = true
 	return true
 
-func score_embedding(spell_embedding: Array) -> Array:
+func score_embedding(spell_embedding: Array, source_text: String = "") -> Array:
 	if not is_ready or aspect_vectors.is_empty():
 		return []
 
-	return SemanticScorer.score_embedding_against_vectors(spell_embedding, aspect_vectors)
+	var scores: Array = SemanticScorer.score_embedding_against_vectors(spell_embedding, aspect_vectors)
+	if source_text.is_empty():
+		return scores
+
+	var penalty_factor: float = _get_length_penalty_factor(source_text)
+	return _scale_scores(scores, penalty_factor)
+
+func get_aspect_names() -> PackedStringArray:
+	return aspect_names
 
 func _embed_aspect_phrases(aspect_name: String, phrases: Array) -> Array:
 	var result: Dictionary = await ollama_client.embed(phrases)
@@ -47,7 +63,11 @@ func _embed_aspect_phrases(aspect_name: String, phrases: Array) -> Array:
 		_fail_initialize("Empty embeddings for aspect: " + aspect_name)
 		return []
 
-	var averaged: Array = SemanticScorer.average_embeddings(embeddings)
+	var weights: Array = []
+	for phrase in phrases:
+		weights.append(_get_length_penalty_factor(str(phrase)))
+
+	var averaged: Array = SemanticScorer.weighted_average_embeddings(embeddings, weights)
 	if averaged.is_empty():
 		_fail_initialize("Invalid averaged embedding for aspect: " + aspect_name)
 		return []
@@ -87,3 +107,22 @@ func _load_aspect_descriptions(file_path: String) -> Dictionary:
 		return {}
 
 	return data
+
+func _scale_scores(scores: Array, factor: float) -> Array:
+	var scaled: Array = []
+	for entry in scores:
+		scaled.append({
+			"name": str(entry["name"]),
+			"score": float(entry["score"]) * factor
+		})
+	return scaled
+
+func _get_length_penalty_factor(text: String) -> float:
+	var normalized: String = text.strip_edges()
+	if normalized.is_empty():
+		return 1.0
+
+	var word_count: int = normalized.split(" ", false).size()
+	var adjusted_word_count: float = maxf(1.0, float(word_count) / length_penalty_reference_words)
+	var penalty: float = length_penalty_sqrt_scale / sqrt(adjusted_word_count)
+	return clampf(penalty, length_penalty_min_factor, 1.0)

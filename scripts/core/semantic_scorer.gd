@@ -20,6 +20,31 @@ static func average_embeddings(vectors: Array) -> Array:
 
 	return out
 
+static func weighted_average_embeddings(vectors: Array, weights: Array) -> Array:
+	if vectors.is_empty() or vectors.size() != weights.size():
+		return []
+
+	var dim: int = vectors[0].size()
+	var out: Array = []
+	out.resize(dim)
+	out.fill(0.0)
+
+	var total_weight: float = 0.0
+	for i in range(vectors.size()):
+		var vec: Array = vectors[i]
+		var weight: float = float(weights[i])
+		total_weight += weight
+		for j in range(dim):
+			out[j] += float(vec[j]) * weight
+
+	if total_weight <= 0.0:
+		return []
+
+	for i in range(dim):
+		out[i] /= total_weight
+
+	return out
+
 static func score_embedding_against_vectors(source_embedding: Array, target_vectors: Dictionary) -> Array:
 	if target_vectors.is_empty():
 		return []
@@ -48,6 +73,36 @@ static func rank_embedding_against_vectors(source_embedding: Array, target_vecto
 		ranked_scores[target_name] = _cosine_similarity(source_embedding, target_embedding)
 
 	return _sort_scores(ranked_scores)
+
+static func cosine_similarity(a: Array, b: Array) -> float:
+	return _cosine_similarity(a, b)
+
+static func scale_vector(vector: Array, factor: float) -> Array:
+	var out: Array = []
+	out.resize(vector.size())
+
+	for i in range(vector.size()):
+		out[i] = float(vector[i]) * factor
+
+	return out
+
+static func add_vectors(a: Array, b: Array) -> Array:
+	if a.size() != b.size():
+		return []
+
+	var out: Array = []
+	out.resize(a.size())
+
+	for i in range(a.size()):
+		out[i] = float(a[i]) + float(b[i])
+
+	return out
+
+static func zero_vector(size: int) -> Array:
+	var out: Array = []
+	out.resize(size)
+	out.fill(0.0)
+	return out
 
 static func _sort_scores(scores: Dictionary) -> Array:
 	var items: Array = []

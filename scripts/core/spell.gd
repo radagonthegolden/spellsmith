@@ -1,7 +1,8 @@
 extends Node
 class_name Spell
 
-signal spell_scored(sorted_scores: Array, text: String, cast_multiplier: float)
+signal spell_encoded(spell_embedding: Array, text: String)
+signal initialization_finished(success: bool)
 
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
 @onready var ollama_client: OllamaClient = $OllamaClient
@@ -15,9 +16,11 @@ func _ready() -> void:
 	var initialized: bool = await aspect_library.initialize()
 	if not initialized:
 		push_error("AspectLibrary failed to initialize")
+		initialization_finished.emit(false)
 		return
 
 	loading = false
+	initialization_finished.emit(true)
 
 func _on_spell_cast(text = null) -> void:
 	if loading or busy:
@@ -28,16 +31,15 @@ func _on_spell_cast(text = null) -> void:
 		return
 
 	busy = true
-	var sorted_scores: Array = await _compute_sorted_scores(cast_text)
+	var spell_embedding: Array = await _compute_spell_embedding(cast_text)
 	busy = false
 
-	if sorted_scores.is_empty():
+	if spell_embedding.is_empty():
 		return
 
-	var cast_multiplier := usage_tracker.compute_multiplier_and_register(cast_text)
-	spell_scored.emit(sorted_scores, cast_text, cast_multiplier)
+	spell_encoded.emit(spell_embedding, cast_text)
 	spell_input.text = ""
-	print(sorted_scores)
+	print(spell_embedding)
 
 func _extract_cast_text(text: Variant) -> String:
 	# Button presses call without args; text_submitted provides the string.
@@ -47,7 +49,7 @@ func _extract_cast_text(text: Variant) -> String:
 	var cast_text := str(text).strip_edges()
 	return cast_text
 
-func _compute_sorted_scores(cast_text: String) -> Array:
+func _compute_spell_embedding(cast_text: String) -> Array:
 	var result: Dictionary = await ollama_client.embed(cast_text)
 	if not result.get("ok", false):
 		push_error("Embedding request failed")
@@ -58,13 +60,7 @@ func _compute_sorted_scores(cast_text: String) -> Array:
 		push_error("Empty embeddings")
 		return []
 
-	var spell_embedding: Array = embeddings[0]
-	var sorted_scores: Array = aspect_library.score_embedding(spell_embedding)
-	if sorted_scores.is_empty():
-		push_error("No aspect scores were produced")
-		return []
-
-	return sorted_scores
+	return embeddings[0]
 
 func _on_purge_spell_usage_pressed() -> void:
 	usage_tracker.purge_usage()

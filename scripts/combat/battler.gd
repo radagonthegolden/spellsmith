@@ -8,6 +8,9 @@ class_name Battler
 var health: int = 0
 
 func _ready() -> void:
+	reset_health()
+
+func reset_health() -> void:
 	health = clampi(start_health, 0, max_health)
 
 func take_damage(amount: int) -> bool:

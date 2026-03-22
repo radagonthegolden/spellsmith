@@ -1,0 +1,438 @@
+[
+  {
+    "name": "Bathhouse Admitter",
+    "spells": [
+      {
+        "name": "Call of the Rightful Bather",
+        "aspect": "Call",
+        "damage": 2
+      },
+      {
+        "name": "Veil of Murmuring Steam",
+        "aspect": "Veil",
+        "damage": 3
+      },
+      {
+        "name": "Media of the Measured Channel",
+        "aspect": "Media",
+        "damage": 2
+      },
+      {
+        "name": "Figure of the Consecrated Basin",
+        "aspect": "Figure",
+        "damage": 4
+      },
+      {
+        "name": "Drift of Sediment and Silt",
+        "aspect": "Drift",
+        "damage": 2
+      },
+      {
+        "name": "Echo of the Old Initiates",
+        "aspect": "Echo",
+        "damage": 2
+      },
+      {
+        "name": "Fade of Forgotten Rites",
+        "aspect": "Fade",
+        "damage": 1
+      }
+    ],
+    "descriptor_sentences": [
+      "A ritual functionary left behind by an abandoned initiation bath.",
+      "It governs admission, sequence, and the old etiquette of approach.",
+      "Its body is tiled in cracked mosaic and damp with half-living condensation.",
+      "It does not hate intruders; it simply treats unsanctioned entry as a failure of form."
+    ],
+    "min_descriptor_resonance": 0.45,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Fade",
+        "intensity": "high"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Figure",
+        "intensity": "high"
+      }
+    ]
+  },
+  {
+    "name": "False Figure",
+    "spells": [
+      {
+        "name": "Call of the Stolen Title",
+        "aspect": "Call",
+        "damage": 3
+      },
+      {
+        "name": "Veil of Plausible Shape",
+        "aspect": "Veil",
+        "damage": 3
+      },
+      {
+        "name": "Media of Borrowed Standing",
+        "aspect": "Media",
+        "damage": 2
+      },
+      {
+        "name": "Figure of Wrong Coherence",
+        "aspect": "Figure",
+        "damage": 4
+      },
+      {
+        "name": "Drift of Misread Identity",
+        "aspect": "Drift",
+        "damage": 3
+      },
+      {
+        "name": "Echo of Repeated Error",
+        "aspect": "Echo",
+        "damage": 2
+      },
+      {
+        "name": "Fade of the True Name",
+        "aspect": "Fade",
+        "damage": 1
+      }
+    ],
+    "descriptor_sentences": [
+      "A malformed meaning that has cohered into a convincing but dangerous body.",
+      "It wears the outline of a role correctly, but the inner relation is wrong.",
+      "Such beings are hunted because they trap places, people, and dreams inside bad interpretations.",
+      "It survives by being just believable enough to pass for the thing it imitates."
+    ],
+    "min_descriptor_resonance": 0.55,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Call",
+        "intensity": "high"
+      },
+      {
+        "aspect": "Fade",
+        "intensity": "medium"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Figure",
+        "intensity": "high"
+      }
+    ]
+  },
+  {
+    "name": "Cabaret Reveler",
+    "spells": [
+      {
+        "name": "Call of the Cutting Punchline",
+        "aspect": "Call",
+        "damage": 2
+      },
+      {
+        "name": "Veil of the Smiling Mask",
+        "aspect": "Veil",
+        "damage": 3
+      },
+      {
+        "name": "Media of Shared Laughter",
+        "aspect": "Media",
+        "damage": 2
+      },
+      {
+        "name": "Figure of the Comic Stage",
+        "aspect": "Figure",
+        "damage": 2
+      },
+      {
+        "name": "Drift of Double Meaning",
+        "aspect": "Drift",
+        "damage": 4
+      },
+      {
+        "name": "Echo of the Refrain",
+        "aspect": "Echo",
+        "damage": 3
+      },
+      {
+        "name": "Fade of Solemn Pretension",
+        "aspect": "Fade",
+        "damage": 2
+      }
+    ],
+    "descriptor_sentences": [
+      "A performer-entity born where jokes, inversion, and public delight became dream-ritual.",
+      "It attacks through slippage, embarrassment, and the sudden collapse of rigid speech.",
+      "Its laughter is not empty mockery but a force that loosens over-serious certainty.",
+      "It is dangerous because it can make stable meanings lose their footing without ever seeming hostile."
+    ],
+    "min_descriptor_resonance": 0.4,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Figure",
+        "intensity": "high"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Drift",
+        "intensity": "high"
+      }
+    ]
+  },
+  {
+    "name": "Silent Processional",
+    "spells": [
+      {
+        "name": "Call of the Unspeaking Gesture",
+        "aspect": "Call",
+        "damage": 2
+      },
+      {
+        "name": "Veil of the Lowered Face",
+        "aspect": "Veil",
+        "damage": 2
+      },
+      {
+        "name": "Media of Shared Motion",
+        "aspect": "Media",
+        "damage": 4
+      },
+      {
+        "name": "Figure of the Choreographed Line",
+        "aspect": "Figure",
+        "damage": 3
+      },
+      {
+        "name": "Drift of Animal Grace",
+        "aspect": "Drift",
+        "damage": 2
+      },
+      {
+        "name": "Echo of the Repeated Step",
+        "aspect": "Echo",
+        "damage": 3
+      },
+      {
+        "name": "Fade of Verbal Thought",
+        "aspect": "Fade",
+        "damage": 2
+      }
+    ],
+    "descriptor_sentences": [
+      "A member of a heretical procession that trusts coordinated movement more than speech.",
+      "Its body communicates through posture, spacing, and rhythm rather than ordinary address.",
+      "It is not mute through lack, but by conviction that words are too crude for certain truths.",
+      "To fight it is to be drawn into a logic of alignment, imitation, and bodily persuasion."
+    ],
+    "min_descriptor_resonance": 0.45,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Call",
+        "intensity": "medium"
+      },
+      {
+        "aspect": "Media",
+        "intensity": "medium"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Fade",
+        "intensity": "high"
+      }
+    ]
+  },
+  {
+    "name": "Logician Recluse",
+    "spells": [
+      {
+        "name": "Call of the Explicit Premise",
+        "aspect": "Call",
+        "damage": 3
+      },
+      {
+        "name": "Veil of the Unstated Assumption",
+        "aspect": "Veil",
+        "damage": 2
+      },
+      {
+        "name": "Media of Consequence",
+        "aspect": "Media",
+        "damage": 3
+      },
+      {
+        "name": "Figure of the Valid Chain",
+        "aspect": "Figure",
+        "damage": 4
+      },
+      {
+        "name": "Drift of the Hidden Contradiction",
+        "aspect": "Drift",
+        "damage": 3
+      },
+      {
+        "name": "Echo of Annotated Proof",
+        "aspect": "Echo",
+        "damage": 2
+      },
+      {
+        "name": "Fade of Vagueness",
+        "aspect": "Fade",
+        "damage": 2
+      }
+    ],
+    "descriptor_sentences": [
+      "A dream scholar who believes thought becomes trustworthy only when forced into exact form.",
+      "It is austere in posture and language, yet intensely delighted by precision and consequence.",
+      "Its attacks take the form of distinctions, definitions, and unbearable coherence.",
+      "To stand before it is to feel every blurred intuition pressed toward answerable structure."
+    ],
+    "min_descriptor_resonance": 0.5,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Drift",
+        "intensity": "high"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Figure",
+        "intensity": "high"
+      },
+      {
+        "aspect": "Media",
+        "intensity": "medium"
+      }
+    ]
+  },
+  {
+    "name": "Echo Harvester",
+    "spells": [
+      {
+        "name": "Call of the Remembered Voice",
+        "aspect": "Call",
+        "damage": 2
+      },
+      {
+        "name": "Veil of Lingering Air",
+        "aspect": "Veil",
+        "damage": 2
+      },
+      {
+        "name": "Media of Repeated Transmission",
+        "aspect": "Media",
+        "damage": 3
+      },
+      {
+        "name": "Figure of the Returning Pattern",
+        "aspect": "Figure",
+        "damage": 2
+      },
+      {
+        "name": "Drift of Rephrased Memory",
+        "aspect": "Drift",
+        "damage": 2
+      },
+      {
+        "name": "Echo of the First Saying",
+        "aspect": "Echo",
+        "damage": 4
+      },
+      {
+        "name": "Fade of the Present Moment",
+        "aspect": "Fade",
+        "damage": 3
+      }
+    ],
+    "descriptor_sentences": [
+      "A collector of repetitions that feeds on refrains, inheritances, and things said once too well.",
+      "It gathers old speech and sends it back altered just enough to keep it alive.",
+      "Around it, every corridor feels already walked and every sentence already answered.",
+      "Its danger lies in making the past more persuasive than the living present."
+    ],
+    "min_descriptor_resonance": 0.45,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Fade",
+        "intensity": "high"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Echo",
+        "intensity": "high"
+      }
+    ]
+  },
+  {
+    "name": "Pale Attrition",
+    "spells": [
+      {
+        "name": "Call of the Faint Farewell",
+        "aspect": "Call",
+        "damage": 1
+      },
+      {
+        "name": "Veil of Dust-Laden Quiet",
+        "aspect": "Veil",
+        "damage": 3
+      },
+      {
+        "name": "Media of Slow Withdrawal",
+        "aspect": "Media",
+        "damage": 2
+      },
+      {
+        "name": "Figure of the Hollowed Shell",
+        "aspect": "Figure",
+        "damage": 2
+      },
+      {
+        "name": "Drift of Weakening Relation",
+        "aspect": "Drift",
+        "damage": 3
+      },
+      {
+        "name": "Echo of What Barely Remains",
+        "aspect": "Echo",
+        "damage": 2
+      },
+      {
+        "name": "Fade of the Last Distinction",
+        "aspect": "Fade",
+        "damage": 4
+      }
+    ],
+    "descriptor_sentences": [
+      "An entity of erosion, exhaustion, and the gentle failure of continuity.",
+      "It does not destroy through impact but by thinning meanings until they can no longer hold.",
+      "Names weaken around it, rituals lose conviction, and the edges of things begin to soften.",
+      "Its presence is most dangerous when mistaken for peace."
+    ],
+    "min_descriptor_resonance": 0.5,
+    "max_descriptor_resonance": 1.0,
+    "player_victory_conditions": [
+      {
+        "aspect": "Call",
+        "intensity": "medium"
+      },
+      {
+        "aspect": "Figure",
+        "intensity": "medium"
+      }
+    ],
+    "player_loss_conditions": [
+      {
+        "aspect": "Fade",
+        "intensity": "high"
+      }
+    ]
+  }
+]

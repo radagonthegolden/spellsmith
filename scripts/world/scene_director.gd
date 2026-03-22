@@ -4,11 +4,14 @@ class_name SceneDirector
 @export var scenes_file_path: String = "res://data/scenes.json"
 @export var start_scene_id: String = "antechamber"
 @export var exit_match_threshold: float = 0.28
+@export var start_in_combat: bool = true
+@export var combat_start_scene_id: String = "threshold"
+@export var combat_start_enemy_name: String = "Bathhouse Admitter"
 
 const DEFAULT_PROMPT: String = "Write the next line..."
 
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
-@onready var manuscript: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame/LoreMargin/LoreText"
+@onready var manuscript: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
 @onready var combat_manager: CombatManager = $"../CombatManager"
 @onready var spell: Spell = $"../spell"
 @onready var ollama_client: OllamaClient = $"../spell/OllamaClient"
@@ -22,9 +25,16 @@ func _ready() -> void:
 	combat_manager.combat_finished.connect(_on_combat_finished)
 	_load_scenes()
 	await ollama_client.ensure_started()
+	if spell.loading:
+		await spell.initialization_finished
 	await _initialize_intent_embeddings()
 	manuscript.clear()
-	_show_scene(start_scene_id)
+	if start_in_combat:
+		_show_scene(combat_start_scene_id)
+		_initialize_combat_start(combat_start_scene_id, combat_start_enemy_name)
+		await combat_manager.start_battle(combat_start_enemy_name)
+	else:
+		_show_scene(start_scene_id)
 	spell_input.grab_focus()
 
 func _on_player_submitted(text = null) -> void:
@@ -68,7 +78,7 @@ func _resolve_scene_input(submitted_text: String) -> void:
 	if bool(best_intent.get("start_combat", false)):
 		pending_victory_scene_id = str(best_intent.get("victory_scene", ""))
 		pending_defeat_scene_id = str(best_intent.get("defeat_scene", ""))
-		combat_manager.start_battle(str(best_intent.get("enemy_name", "Enemy")))
+		await combat_manager.start_battle(str(best_intent.get("enemy_name", "Enemy")))
 		return
 
 	var next_scene_id: String = str(best_intent.get("next_scene", current_scene_id))
@@ -88,6 +98,15 @@ func _show_scene(scene_id: String) -> void:
 	var scene: Dictionary = scenes_by_id[scene_id]
 	spell_input.placeholder_text = str(scene.get("prompt", DEFAULT_PROMPT))
 	_append_paragraph(str(scene["prose"]))
+
+func _initialize_combat_start(scene_id: String, enemy_name: String) -> void:
+	var scene: Dictionary = scenes_by_id[scene_id]
+	for intent in scene["intents"]:
+		if bool(intent.get("start_combat", false)) and str(intent.get("enemy_name", "")) == enemy_name:
+			pending_victory_scene_id = str(intent.get("victory_scene", ""))
+			pending_defeat_scene_id = str(intent.get("defeat_scene", ""))
+			_append_paragraph(str(intent["response"]))
+			return
 
 func _append_paragraph(text: String) -> void:
 	manuscript.append_text(text + "\n\n")

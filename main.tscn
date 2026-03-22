@@ -102,19 +102,25 @@ theme_override_constants/margin_top = 38
 theme_override_constants/margin_right = 46
 theme_override_constants/margin_bottom = 22
 
-[node name="LoreFrame" type="PanelContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin" unique_id=412455161]
+[node name="PageColumns" type="HBoxContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin" unique_id=208145733]
 layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="LoreFrame" type="PanelContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns" unique_id=412455161]
+layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_manuscript")
 
-[node name="LoreMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame" unique_id=189000616]
+[node name="LoreMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame" unique_id=189000616]
 layout_mode = 2
 theme_override_constants/margin_left = 34
 theme_override_constants/margin_top = 30
 theme_override_constants/margin_right = 34
 theme_override_constants/margin_bottom = 30
 
-[node name="LoreText" type="RichTextLabel" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/LoreFrame/LoreMargin" unique_id=440863412]
+[node name="LoreText" type="RichTextLabel" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin" unique_id=440863412]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_colors/default_color = Color(0.172549, 0.117647, 0.0705882, 1)
@@ -122,6 +128,28 @@ theme_override_font_sizes/normal_font_size = 26
 bbcode_enabled = true
 scroll_active = true
 selection_enabled = true
+
+[node name="FightNotesFrame" type="PanelContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns" unique_id=625818429]
+custom_minimum_size = Vector2(320, 0)
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_manuscript")
+
+[node name="FightNotesMargin" type="MarginContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/FightNotesFrame" unique_id=208816219]
+layout_mode = 2
+theme_override_constants/margin_left = 26
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 26
+theme_override_constants/margin_bottom = 24
+
+[node name="FightNotes" type="RichTextLabel" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/FightNotesFrame/FightNotesMargin" unique_id=136237784]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.172549, 0.117647, 0.0705882, 1)
+theme_override_font_sizes/normal_font_size = 21
+bbcode_enabled = true
+scroll_active = false
 
 [node name="InputRow" type="HBoxContainer" parent="OuterMargin/ShadowPanel/Panel/Content" unique_id=1615776331]
 layout_mode = 2
@@ -195,6 +223,8 @@ script = ExtResource("8_l2gf2")
 
 [node name="PlayerBattler" type="Node" parent="CombatManager" unique_id=1112674722]
 script = ExtResource("4_2wk8u")
+max_health = 12
+start_health = 12
 
 [node name="OpponentBattler" type="Node" parent="CombatManager" unique_id=322087507]
 script = ExtResource("4_2wk8u")
@@ -214,4 +244,4 @@ script = ExtResource("7_0dnga")
 [connection signal="text_submitted" from="OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit" to="SceneDirector" method="_on_player_submitted"]
 [connection signal="pressed" from="HiddenUi/Button" to="SceneDirector" method="_on_player_submitted"]
 [connection signal="pressed" from="HiddenUi/PurgeUsageButton" to="spell" method="_on_purge_spell_usage_pressed"]
-[connection signal="spell_scored" from="spell" to="CombatManager" method="_on_spell_scored"]
+[connection signal="spell_encoded" from="spell" to="CombatManager" method="_on_spell_encoded"]
