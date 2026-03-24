@@ -6,6 +6,7 @@ class_name AspectLibrary
 @export var length_penalty_reference_words: float = 4.0
 @export var length_penalty_sqrt_scale: float = 1.0
 @export var length_penalty_min_factor: float = 0.5
+@export var softmax_temperature: float = 0.2
 
 @onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
 
@@ -42,23 +43,18 @@ func score_embedding(spell_embedding: Array, source_text: String = "") -> Array:
 	if not is_ready or aspect_vectors.is_empty():
 		return []
 
-	var scores: Array = SemanticScorer.score_embedding_against_vectors(spell_embedding, aspect_vectors)
+	var scores: Array = SemanticScorer.score_embedding_against_vectors(spell_embedding, aspect_vectors, softmax_temperature)
 	if source_text.is_empty():
 		return scores
 
 	var penalty_factor: float = _get_length_penalty_factor(source_text)
-	return _scale_scores(scores, penalty_factor)
+	return SemanticScorer.scale_scores(scores, penalty_factor)
 
 func get_aspect_names() -> PackedStringArray:
 	return aspect_names
 
 func _embed_aspect_phrases(aspect_name: String, phrases: Array) -> Array:
-	var result: Dictionary = await ollama_client.embed(phrases)
-	if not result.get("ok", false):
-		_fail_initialize("Failed to embed aspect: " + aspect_name)
-		return []
-
-	var embeddings: Array = result.get("embeddings", [])
+	var embeddings: Array = await ollama_client.embed_many(phrases, "Aspect embedding: " + aspect_name)
 	if embeddings.is_empty():
 		_fail_initialize("Empty embeddings for aspect: " + aspect_name)
 		return []
@@ -107,15 +103,6 @@ func _load_aspect_descriptions(file_path: String) -> Dictionary:
 		return {}
 
 	return data
-
-func _scale_scores(scores: Array, factor: float) -> Array:
-	var scaled: Array = []
-	for entry in scores:
-		scaled.append({
-			"name": str(entry["name"]),
-			"score": float(entry["score"]) * factor
-		})
-	return scaled
 
 func _get_length_penalty_factor(text: String) -> float:
 	var normalized: String = text.strip_edges()

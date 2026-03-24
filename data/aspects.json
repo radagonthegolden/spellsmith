@@ -7,7 +7,11 @@
     "the fitting word that strips illusion and makes truth answerable",
     "a declaration so exact that vagueness can no longer survive",
     "language as witness, summoning what was concealed into clarity",
-    "to call a thing rightly and restore it to its proper place"
+    "to call a thing rightly and restore it to its proper place",
+    "glorious adressing",
+    "precise imposition",
+    "excellent enunciation",
+    "creation of terms", "neologism"
   ],
   "Veil": [
     "concealment that protects by refusing full availability",
@@ -17,7 +21,9 @@
     "a mask that guards rather than merely deceives",
     "the dream's power to imply without fully disclosing",
     "sacred reserve against greedy understanding",
-    "what remains half-seen because revelation is not always kindness"
+    "what remains half-seen because revelation is not always kindness",
+    "whispered truth", "gossiped secrets", "double senses",
+    "semi-transparent thought", "unclear reasonings"
   ],
   "Media": [
     "that through which meaning passes across separation",
@@ -27,7 +33,9 @@
     "what makes a boundary traversable without denying the boundary",
     "the conduit by which thought survives the journey between minds and worlds",
     "all means by which the distant becomes communicable",
-    "the force of connection itself, neither source nor destination but the way between"
+    "the force of connection itself, neither source nor destination but the way between",
+    "transmittions of meaning", "interchange of opinions",
+    "boundless options", "spreading the word", "traversal of meaning"
   ],
   "Figure": [
     "shape held clearly enough to remain itself",
@@ -37,7 +45,9 @@
     "the structure that keeps a role, body, or thought from coming apart",
     "law, outline, and proportion gathered into durable relation",
     "what binds scattered parts into one recognizable whole",
-    "the integrity by which a thing persists instead of dissolving"
+    "the integrity by which a thing persists instead of dissolving",
+    "setting of meaning", "sedimenting meaning", "bounderies in truth",
+    "hardlining, definitions", "cementing of concepts"
   ],
   "Drift": [
     "meaning that slides into another shape without fully breaking",
@@ -47,7 +57,9 @@
     "the current that carries forms into new uses and stranger recognitions",
     "the dream's habit of letting one thing become another by degrees",
     "the loosening of categories, names, and fixed meanings",
-    "transformation hidden inside every stable form"
+    "transformation hidden inside every stable form",
+    "drifting meanings", "changing and morphing", "evolution and regression",
+    "mimicry, unalignment", "odd and unepexcted shapes", "remouval of limits"
   ],
   "Echo": [
     "what returns after the first saying and continues to act",
@@ -57,7 +69,9 @@
     "memory made active as response and return",
     "what survives by being called back again",
     "the after-sound of a truth or promise that does not end cleanly",
-    "resonance that binds separated moments into one pattern"
+    "resonance that binds separated moments into one pattern",
+    "remembering and recalling", "tracing back", "lineage and ancestry",
+    "that old echo", "returning from afar", "voices in the silence"
   ],
   "Fade": [
     "meaning thinning out until it can no longer bear its old weight",
@@ -67,6 +81,8 @@
     "the slow recession of clarity, structure, and significance",
     "what is not destroyed but allowed to slip beyond effective grasp",
     "language worn smooth until its old force can no longer be felt",
-    "the long diminishment by which things pass from presence into near-loss"
+    "the long diminishment by which things pass from presence into near-loss",
+    "gradual erosion of meaning", "slow oblivion", "forgetfullness and void",
+    "undeniably gone, never to be seen again", "death and dissolution", "no more"
   ]
 }

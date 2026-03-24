@@ -11,7 +11,8 @@ class_name SceneDirector
 const DEFAULT_PROMPT: String = "Write the next line..."
 
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
-@onready var manuscript: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
+@onready var manuscript = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
+
 @onready var combat_manager: CombatManager = $"../CombatManager"
 @onready var spell: Spell = $"../spell"
 @onready var ollama_client: OllamaClient = $"../spell/OllamaClient"
@@ -28,7 +29,7 @@ func _ready() -> void:
 	if spell.loading:
 		await spell.initialization_finished
 	await _initialize_intent_embeddings()
-	manuscript.clear()
+	manuscript.clear_and_reset()
 	if start_in_combat:
 		_show_scene(combat_start_scene_id)
 		_initialize_combat_start(combat_start_scene_id, combat_start_enemy_name)
@@ -50,21 +51,19 @@ func _on_player_submitted(text = null) -> void:
 	await _resolve_scene_input(submitted_text)
 
 func _resolve_scene_input(submitted_text: String) -> void:
-	var result: Dictionary = await ollama_client.embed(submitted_text)
-	if not result.get("ok", false):
-		push_error("Scene input embedding failed")
+	var player_embedding: Array = await ollama_client.embed_one(submitted_text, "Scene input embedding")
+	if player_embedding.is_empty():
 		return
 
-	var embeddings: Array = result.get("embeddings", [])
-	if embeddings.is_empty():
-		push_error("Scene input produced no embedding")
-		return
-
-	var player_embedding: Array = embeddings[0]
 	var scene: Dictionary = scenes_by_id[current_scene_id]
 	_append_paragraph("You write: \"" + submitted_text + "\"")
 
 	var scored_intents: Array = SemanticScorer.rank_embedding_against_vectors(player_embedding, scene["_intent_vectors"])
+	if scored_intents.is_empty():
+		push_error("Scene has no initialized intents: " + current_scene_id)
+		_append_paragraph(str(scene["default_reply"]))
+		return
+
 	var best_intent_name: String = str(scored_intents[0]["name"])
 	var best_intent_score: float = float(scored_intents[0]["score"])
 
@@ -109,8 +108,7 @@ func _initialize_combat_start(scene_id: String, enemy_name: String) -> void:
 			return
 
 func _append_paragraph(text: String) -> void:
-	manuscript.append_text(text + "\n\n")
-	manuscript.scroll_to_line(maxi(0, manuscript.get_line_count() - 1))
+	manuscript.append_animated(text + "\n\n")
 
 func _load_scenes() -> void:
 	var file := FileAccess.open(scenes_file_path, FileAccess.READ)
@@ -133,8 +131,9 @@ func _initialize_intent_embeddings() -> void:
 		var intent_lookup: Dictionary = {}
 		for intent in intents:
 			var phrases: Array = intent["phrases"]
-			var result: Dictionary = await ollama_client.embed(phrases)
-			var embeddings: Array = result["embeddings"]
+			var embeddings: Array = await ollama_client.embed_many(phrases, "Intent embedding")
+			if embeddings.is_empty():
+				continue
 			var intent_name: String = str(intent.get("id", intent["response"]))
 			intent_vectors[intent_name] = SemanticScorer.average_embeddings(embeddings)
 			intent_lookup[intent_name] = intent

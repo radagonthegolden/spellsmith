@@ -49,13 +49,13 @@
     "player_victory_conditions": [
       {
         "aspect": "Fade",
-        "intensity": "high"
+        "intensity": 6
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Figure",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   },
@@ -109,17 +109,17 @@
     "player_victory_conditions": [
       {
         "aspect": "Call",
-        "intensity": "high"
+        "intensity": 6
       },
       {
         "aspect": "Fade",
-        "intensity": "medium"
+        "intensity": 4
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Figure",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   },
@@ -173,13 +173,13 @@
     "player_victory_conditions": [
       {
         "aspect": "Figure",
-        "intensity": "high"
+        "intensity": 6
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Drift",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   },
@@ -233,17 +233,17 @@
     "player_victory_conditions": [
       {
         "aspect": "Call",
-        "intensity": "medium"
+        "intensity": 4
       },
       {
         "aspect": "Media",
-        "intensity": "medium"
+        "intensity": 4
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Fade",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   },
@@ -297,17 +297,17 @@
     "player_victory_conditions": [
       {
         "aspect": "Drift",
-        "intensity": "high"
+        "intensity": 6
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Figure",
-        "intensity": "high"
+        "intensity": 6
       },
       {
         "aspect": "Media",
-        "intensity": "medium"
+        "intensity": 4
       }
     ]
   },
@@ -361,13 +361,13 @@
     "player_victory_conditions": [
       {
         "aspect": "Fade",
-        "intensity": "high"
+        "intensity": 6
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Echo",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   },
@@ -421,17 +421,17 @@
     "player_victory_conditions": [
       {
         "aspect": "Call",
-        "intensity": "medium"
+        "intensity": 4
       },
       {
         "aspect": "Figure",
-        "intensity": "medium"
+        "intensity": 4
       }
     ],
     "player_loss_conditions": [
       {
         "aspect": "Fade",
-        "intensity": "high"
+        "intensity": 6
       }
     ]
   }

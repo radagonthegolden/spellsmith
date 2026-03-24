@@ -31,7 +31,7 @@ func _on_spell_cast(text = null) -> void:
 		return
 
 	busy = true
-	var spell_embedding: Array = await _compute_spell_embedding(cast_text)
+	var spell_embedding: Array = await ollama_client.embed_one(cast_text, "Spell embedding")
 	busy = false
 
 	if spell_embedding.is_empty():
@@ -48,19 +48,6 @@ func _extract_cast_text(text: Variant) -> String:
 
 	var cast_text := str(text).strip_edges()
 	return cast_text
-
-func _compute_spell_embedding(cast_text: String) -> Array:
-	var result: Dictionary = await ollama_client.embed(cast_text)
-	if not result.get("ok", false):
-		push_error("Embedding request failed")
-		return []
-
-	var embeddings: Array = result.get("embeddings", [])
-	if embeddings.is_empty():
-		push_error("Empty embeddings")
-		return []
-
-	return embeddings[0]
 
 func _on_purge_spell_usage_pressed() -> void:
 	usage_tracker.purge_usage()

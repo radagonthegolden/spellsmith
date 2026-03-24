@@ -45,7 +45,16 @@ static func weighted_average_embeddings(vectors: Array, weights: Array) -> Array
 
 	return out
 
-static func score_embedding_against_vectors(source_embedding: Array, target_vectors: Dictionary) -> Array:
+static func scale_scores(scores: Array, factor: float) -> Array:
+	var scaled: Array = []
+	for entry in scores:
+		scaled.append({
+			"name": str(entry["name"]),
+			"score": float(entry["score"]) * factor
+		})
+	return scaled
+
+static func score_embedding_against_vectors(source_embedding: Array, target_vectors: Dictionary, softmax_temperature: float = 1.0) -> Array:
 	if target_vectors.is_empty():
 		return []
 
@@ -61,7 +70,7 @@ static func score_embedding_against_vectors(source_embedding: Array, target_vect
 		var centered_target: Array = _subtract_vector(target_embedding, target_mean)
 		scores[target_name] = _cosine_similarity(centered_source, centered_target)
 
-	return _sort_scores(_softmax_scores(scores))
+	return _sort_scores(_softmax_scores(scores, softmax_temperature))
 
 static func rank_embedding_against_vectors(source_embedding: Array, target_vectors: Dictionary) -> Array:
 	if target_vectors.is_empty():
@@ -76,54 +85,6 @@ static func rank_embedding_against_vectors(source_embedding: Array, target_vecto
 
 static func cosine_similarity(a: Array, b: Array) -> float:
 	return _cosine_similarity(a, b)
-
-static func scale_vector(vector: Array, factor: float) -> Array:
-	var out: Array = []
-	out.resize(vector.size())
-
-	for i in range(vector.size()):
-		out[i] = float(vector[i]) * factor
-
-	return out
-
-static func add_vectors(a: Array, b: Array) -> Array:
-	if a.size() != b.size():
-		return []
-
-	var out: Array = []
-	out.resize(a.size())
-
-	for i in range(a.size()):
-		out[i] = float(a[i]) + float(b[i])
-
-	return out
-
-static func normalize_vector(vector: Array) -> Array:
-	if vector.is_empty():
-		return []
-
-	var norm: float = 0.0
-	for value in vector:
-		var scalar: float = float(value)
-		norm += scalar * scalar
-
-	if norm <= 0.0:
-		return zero_vector(vector.size())
-
-	var inv_norm: float = 1.0 / sqrt(norm)
-	var out: Array = []
-	out.resize(vector.size())
-
-	for i in range(vector.size()):
-		out[i] = float(vector[i]) * inv_norm
-
-	return out
-
-static func zero_vector(size: int) -> Array:
-	var out: Array = []
-	out.resize(size)
-	out.fill(0.0)
-	return out
 
 static func _sort_scores(scores: Dictionary) -> Array:
 	var items: Array = []
@@ -157,10 +118,11 @@ static func _cosine_similarity(a: Array, b: Array) -> float:
 
 	return dot / (sqrt(norm_a) * sqrt(norm_b))
 
-static func _softmax_scores(scores: Dictionary) -> Dictionary:
+static func _softmax_scores(scores: Dictionary, temperature: float = 1.0) -> Dictionary:
 	if scores.is_empty():
 		return {}
 
+	var temp: float = maxf(temperature, 0.001)
 	var max_score: float = -INF
 	for value in scores.values():
 		max_score = max(max_score, float(value))
@@ -169,7 +131,7 @@ static func _softmax_scores(scores: Dictionary) -> Dictionary:
 	var total: float = 0.0
 
 	for key in scores.keys():
-		var e: float = exp(float(scores[key]) - max_score)
+		var e: float = exp((float(scores[key]) - max_score) / temp)
 		exps[key] = e
 		total += e
 

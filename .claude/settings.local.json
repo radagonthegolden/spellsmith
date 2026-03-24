@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.godotengine.org)",
+      "WebFetch(domain:forum.godotengine.org)",
+      "WebFetch(domain:straydragon.github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:gddoc2yml.nickmaltbie.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:rokojori.com)",
+      "WebFetch(domain:godotengine.org)",
+      "WebFetch(domain:godotforums.org)"
+    ]
+  }
+}

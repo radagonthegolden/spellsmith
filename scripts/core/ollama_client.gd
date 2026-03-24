@@ -105,6 +105,16 @@ func embed(input_data: Variant) -> Dictionary:
 	var embeddings: Array = data.get("embeddings", [])
 	return _response_ok(embeddings)
 
+func embed_many(input_data: Variant, context: String = "Embedding") -> Array:
+	var result: Dictionary = await embed(input_data)
+	return _extract_embeddings(result, context)
+
+func embed_one(input_data: Variant, context: String = "Embedding") -> Array:
+	var embeddings: Array = await embed_many(input_data, context)
+	if embeddings.is_empty():
+		return []
+	return embeddings[0]
+
 func _check_server_up() -> bool:
 	var http := HTTPRequest.new()
 	add_child(http)
@@ -148,3 +158,15 @@ func _response_error(error_code: String) -> Dictionary:
 		"embeddings": [],
 		"error": error_code
 	}
+
+func _extract_embeddings(result: Dictionary, context: String) -> Array:
+	if not result.get("ok", false):
+		push_error(context + " failed: " + str(result.get("error", "")))
+		return []
+
+	var embeddings: Array = result.get("embeddings", [])
+	if embeddings.is_empty():
+		push_error(context + " produced no embeddings")
+		return []
+
+	return embeddings
