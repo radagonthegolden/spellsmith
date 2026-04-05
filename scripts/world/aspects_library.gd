@@ -20,9 +20,7 @@ func initialize() -> bool:
 	aspect_names = PackedStringArray()
 
 	var raw_aspect_data := _load_aspect_descriptions(aspects_file_path)
-	if raw_aspect_data.is_empty():
-		push_error("Empty aspect desc file")
-		return false
+	assert(not raw_aspect_data.is_empty(), "Empty aspect desc file")
 
 	for aspect_name in raw_aspect_data.keys():
 		var aspect_name_text := str(aspect_name)
@@ -55,52 +53,31 @@ func get_aspect_names() -> PackedStringArray:
 
 func _embed_aspect_phrases(aspect_name: String, phrases: Array) -> Array:
 	var embeddings: Array = await ollama_client.embed_many(phrases, "Aspect embedding: " + aspect_name)
-	if embeddings.is_empty():
-		_fail_initialize("Empty embeddings for aspect: " + aspect_name)
-		return []
+	assert(not embeddings.is_empty(), "Empty embeddings for aspect: " + aspect_name)
 
 	var weights: Array = []
 	for phrase in phrases:
 		weights.append(_get_length_penalty_factor(str(phrase)))
 
 	var averaged: Array = SemanticScorer.weighted_average_embeddings(embeddings, weights)
-	if averaged.is_empty():
-		_fail_initialize("Invalid averaged embedding for aspect: " + aspect_name)
-		return []
+	assert(not averaged.is_empty(), "Invalid averaged embedding for aspect: " + aspect_name)
 
 	return averaged
 
-func _fail_initialize(message: String) -> bool:
-	push_error(message)
-	is_ready = false
-	aspect_vectors.clear()
-	return false
-
 func _load_aspect_descriptions(file_path: String) -> Dictionary:
-	if not FileAccess.file_exists(file_path):
-		push_error("Aspect file not found: " + file_path)
-		return {}
+	assert(FileAccess.file_exists(file_path), "Aspect file not found: " + file_path)
 
 	var file := FileAccess.open(file_path, FileAccess.READ)
-	if file == null:
-		push_error("Failed to open aspect file: " + file_path)
-		return {}
+	assert(file != null, "Failed to open aspect file: " + file_path)
 
 	var content := file.get_as_text()
 	file.close()
 
 	var json := JSON.new()
-	var parse_result := json.parse(content)
-
-	if parse_result != OK:
-		push_error("Failed to parse JSON in aspect file: " + file_path)
-		return {}
+	assert(json.parse(content) == OK, "Failed to parse JSON in aspect file: " + file_path)
 
 	var data = json.data
-
-	if typeof(data) != TYPE_DICTIONARY:
-		push_error("Aspect file must contain a JSON object at the root")
-		return {}
+	assert(typeof(data) == TYPE_DICTIONARY, "Aspect file must contain a JSON object at the root")
 
 	return data
 

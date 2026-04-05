@@ -68,10 +68,7 @@ func _load_usage() -> void:
 	file.close()
 
 	var json := JSON.new()
-	var parse_result := json.parse(content)
-	if parse_result != OK:
-		push_error("Failed to parse spell usage file")
-		return
+	assert(json.parse(content) == OK, "Failed to parse spell usage file")
 
 	var data: Dictionary = json.data
 	spell_counts = data.get("spells", {})

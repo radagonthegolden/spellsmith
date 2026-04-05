@@ -3,33 +3,22 @@ class_name CombatEnemyLibrary
 
 const CombatStateResource := preload("res://scripts/combat/combat_state.gd")
 
-var enemies_by_name: Dictionary = {}
+var enemies_by_name := {}
 
 func load_from_file(file_path: String) -> void:
-	if not FileAccess.file_exists(file_path):
-		push_error("Enemy file not found: " + file_path)
-		enemies_by_name.clear()
-		return
+	enemies_by_name.clear()
+	assert(FileAccess.file_exists(file_path), "Enemy file not found: %s" % file_path)
 
 	var file := FileAccess.open(file_path, FileAccess.READ)
-	if file == null:
-		push_error("Failed to open enemy file: " + file_path)
-		enemies_by_name.clear()
-		return
+	assert(file != null, "Failed to open enemy file: %s" % file_path)
 
 	var content := file.get_as_text()
 	file.close()
 
 	var json := JSON.new()
-	var parse_result := json.parse(content)
-	if parse_result != OK:
-		push_error("Failed to parse enemy file: " + file_path)
-		enemies_by_name.clear()
-		return
+	assert(json.parse(content) == OK, "Failed to parse enemy file: %s" % file_path)
 
-	enemies_by_name.clear()
-	var enemies: Array = json.data
-	for entry in enemies:
+	for entry in json.data:
 		var enemy: Dictionary = entry
 		enemies_by_name[str(enemy["name"])] = enemy
 
@@ -37,25 +26,23 @@ func get_enemy(enemy_name: String) -> Dictionary:
 	return enemies_by_name.get(enemy_name, {})
 
 func build_descriptor_vector(enemy: Dictionary, ollama_client: OllamaClient) -> Array:
-	var descriptions: Array = enemy["descriptor_sentences"]
+	var descriptions: Array = enemy.get("descriptor_sentences", [])
 	var embeddings: Array = await ollama_client.embed_many(descriptions, "Enemy descriptor")
-	if embeddings.is_empty():
-		return []
-
 	return SemanticScorer.average_embeddings(embeddings)
 
 func prepare_enemy_spell(enemy: Dictionary, ollama_client: OllamaClient, aspect_library: AspectLibrary) -> Dictionary:
 	var spell_pool: Array = enemy.get("spells", [])
-	if spell_pool.is_empty():
-		push_error("Enemy has no local spells: " + str(enemy.get("name", "Unknown Enemy")))
-		return {}
+	assert(not spell_pool.is_empty(), "Enemy has no local spells: %s" % enemy.get("name", "Unknown Enemy"))
 
-	var prepared_enemy_spell: Dictionary = spell_pool[randi() % spell_pool.size()]
-	if not prepared_enemy_spell.has("_aspect_scores"):
-		var enemy_spell_embedding: Array = await ollama_client.embed_one(str(prepared_enemy_spell["name"]), "Enemy spell embedding")
-		if enemy_spell_embedding.is_empty():
+	var spell: Dictionary = spell_pool.pick_random()
+	var spell_name := str(spell.get("name", ""))
+
+	if not spell.has("_aspect_scores"):
+		var spell_embedding: Array = await ollama_client.embed_one(spell_name, "Enemy spell embedding")
+		if spell_embedding.is_empty():
 			return {}
-		prepared_enemy_spell["_aspect_scores"] = aspect_library.score_embedding(enemy_spell_embedding, str(prepared_enemy_spell["name"]))
 
-	prepared_enemy_spell["_intensity_profile"] = CombatStateResource.build_primary_profile(prepared_enemy_spell["_aspect_scores"])
-	return prepared_enemy_spell
+		spell["_aspect_scores"] = aspect_library.score_embedding(spell_embedding, spell_name)
+
+	spell["_intensity_profile"] = CombatStateResource.build_primary_profile(spell["_aspect_scores"])
+	return spell

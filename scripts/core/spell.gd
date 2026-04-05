@@ -26,7 +26,7 @@ func _on_spell_cast(text = null) -> void:
 	if loading or busy:
 		return
 
-	var cast_text := _extract_cast_text(text)
+	var cast_text := str(spell_input.text).strip_edges()
 	if cast_text.is_empty():
 		return
 
@@ -40,14 +40,6 @@ func _on_spell_cast(text = null) -> void:
 	spell_encoded.emit(spell_embedding, cast_text)
 	spell_input.text = ""
 	print(spell_embedding)
-
-func _extract_cast_text(text: Variant) -> String:
-	# Button presses call without args; text_submitted provides the string.
-	if text == null:
-		text = spell_input.text
-
-	var cast_text := str(text).strip_edges()
-	return cast_text
 
 func _on_purge_spell_usage_pressed() -> void:
 	usage_tracker.purge_usage()
