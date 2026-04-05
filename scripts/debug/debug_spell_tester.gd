@@ -2,10 +2,8 @@ extends Control
 
 const _OllamaScript: GDScript = preload("res://scripts/core/ollama_client.gd")
 const _AspectScript: GDScript = preload("res://scripts/world/aspects_library.gd")
+const SemanticScorerResource := preload("res://scripts/core/semantic_scorer.gd")
 
-const THRESHOLD_LOW: float = 0.12
-const THRESHOLD_MEDIUM: float = 0.18
-const THRESHOLD_HIGH: float = 0.21
 const BAR_WIDTH: int = 20
 const BAR_MAX: float = 0.35
 const BATCH_FILE: String = "res://data/debug_spells.json"
@@ -154,7 +152,7 @@ func _render_single(spell: String, raw_scores: Array, final_scores: Array, penal
 
 	lines.append("")
 	lines.append("[color=#888]Thresholds: low ≥ %.2f   medium ≥ %.2f   high ≥ %.2f   max entropy (uniform): %.3f[/color]" % [
-		THRESHOLD_LOW, THRESHOLD_MEDIUM, THRESHOLD_HIGH, log(float(_aspects.get_aspect_names().size()))
+		SemanticScorerResource.INTENSITY_LOW_THRESHOLD, SemanticScorerResource.INTENSITY_MEDIUM_THRESHOLD, SemanticScorerResource.INTENSITY_HIGH_THRESHOLD, log(float(_aspects.get_aspect_names().size()))
 	])
 
 	_output.clear()
@@ -257,13 +255,12 @@ func _bar(score: float) -> String:
 	return "█".repeat(filled).rpad(BAR_WIDTH, "░")
 
 func _label(score: float) -> String:
-	if score >= THRESHOLD_HIGH: return "high"
-	if score >= THRESHOLD_MEDIUM: return "medium"
-	if score >= THRESHOLD_LOW: return "low"
-	return "faint"
+	return SemanticScorerResource.score_to_intensity_label(score)
 
 func _color(score: float) -> String:
-	if score >= THRESHOLD_HIGH: return "#e05050"
-	if score >= THRESHOLD_MEDIUM: return "#d4b800"
-	if score >= THRESHOLD_LOW: return "#50b050"
-	return "#888888"
+	var rank: int = SemanticScorerResource.score_to_intensity_rank(score)
+	match rank:
+		3: return "#e05050"
+		2: return "#d4b800"
+		1: return "#50b050"
+		_: return "#888888"

@@ -1,6 +1,11 @@
 extends RefCounted
 class_name SemanticScorer
 
+## Intensity thresholds for scoring -> dice conversion
+const INTENSITY_LOW_THRESHOLD: float = 0.30
+const INTENSITY_MEDIUM_THRESHOLD: float = 0.60
+const INTENSITY_HIGH_THRESHOLD: float = 0.90
+
 static func average_embeddings(vectors: Array) -> Array:
 	return weighted_average_embeddings(vectors, vectors.map(func(_v): return 1.0))
 
@@ -70,6 +75,25 @@ static func rank_embedding_against_vectors(source_embedding: Array, target_vecto
 
 static func cosine_similarity(a: Array, b: Array) -> float:
 	return _cosine_similarity(a, b)
+
+static func score_to_intensity_rank(score: float) -> int:
+	"""Convert a score (0-1) to an intensity rank (0-3) for dice allocation."""
+	if score >= INTENSITY_HIGH_THRESHOLD:
+		return 3
+	if score >= INTENSITY_MEDIUM_THRESHOLD:
+		return 2
+	if score >= INTENSITY_LOW_THRESHOLD:
+		return 1
+	return 0
+
+static func score_to_intensity_label(score: float) -> String:
+	"""Convert a score to a human-readable intensity label."""
+	var intensity_rank: int = score_to_intensity_rank(score)
+	match intensity_rank:
+		3: return "high"
+		2: return "medium"
+		1: return "low"
+		_: return "faint"
 
 static func _sort_scores(scores: Dictionary) -> Array:
 	var items: Array = scores.keys().map(func(key):

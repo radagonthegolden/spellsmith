@@ -1,6 +1,8 @@
 extends RefCounted
 class_name CombatState
 
+const SemanticScorerResource := preload("res://scripts/core/semantic_scorer.gd")
+
 ## Combat state system for Spellsmith.
 ## 
 ## Each aspect intensity_rank (0-3) represents the number of dice to roll in conflicts:
@@ -12,10 +14,6 @@ class_name CombatState
 ## When player and enemy spells clash on the same aspect, both roll their dice and
 ## the higher total wins. This adds meaningful randomness while still rewarding
 ## higher aspect accumulation.
-
-const INTENSITY_LOW_THRESHOLD: float = 0.30
-const INTENSITY_MEDIUM_THRESHOLD: float = 0.60
-const INTENSITY_HIGH_THRESHOLD: float = 0.90
 
 # Dice system constants
 const DICE_SIDES: int = 6  # d6
@@ -225,29 +223,8 @@ static func _build_profile(scores: Array, max_entries: int) -> Array:
 		profile.append({
 			"name": str(entry["name"]),
 			"score": score,
-			"intensity_rank": _score_to_intensity_rank(score),
-			"intensity_label": _score_to_intensity_label(score)
-		})
-	return profile
-
-static func _score_to_intensity_rank(score: float) -> int:
-	if score >= INTENSITY_HIGH_THRESHOLD:
-		return 3
-	if score >= INTENSITY_MEDIUM_THRESHOLD:
-		return 2
-	if score >= INTENSITY_LOW_THRESHOLD:
-		return 1
-	return 0
-
-static func _score_to_intensity_label(score: float) -> String:
-	var intensity_rank: int = _score_to_intensity_rank(score)
-	if intensity_rank == 3:
-		return "high"
-	if intensity_rank == 2:
-		return "medium"
-	if intensity_rank == 1:
-		return "low"
-	return "faint"
+					"intensity_rank": SemanticScorerResource.score_to_intensity_rank(score),
+					"intensity_label": SemanticScorerResource.score_to_intensity_label(score)
 
 static func _roll_dice(dice_count: int) -> int:
 	## Rolls dice_count d6s and returns the sum.
@@ -280,3 +257,9 @@ static func _format_context_update(update: Dictionary, aspect_names: PackedStrin
 	if parts.is_empty():
 		return "No aspect gained pressure."
 	return ", ".join(parts)
+
+static func _score_to_intensity_rank(score: float) -> int:
+	return SemanticScorerResource.score_to_intensity_rank(score)
+
+static func _score_to_intensity_label(score: float) -> String:
+	return SemanticScorerResource.score_to_intensity_label(score)
