@@ -140,10 +140,11 @@ func _prepare_enemy_spell() -> void:
 		return
 
 	_log_line(
-		"%s casts %s. Pattern: %s." % [
+		"%s casts %s. Pattern: %s. Damage: %d." % [
 			opponent.display_name,
 			str(prepared_enemy_spell["name"]),
-			CombatStateResource.format_profile(prepared_enemy_spell["_intensity_profile"])
+			CombatStateResource.format_profile(prepared_enemy_spell["_intensity_profile"]),
+			int(prepared_enemy_spell["damage"])
 		]
 	)
 
