@@ -155,15 +155,39 @@ func _resolve_enemy_spell_collision(player_profile: Array) -> void:
 	var damage := int(prepared_enemy_spell["damage"])
 	var spell_name := str(prepared_enemy_spell["name"])
 
-	if CombatStateResource.player_nullifies_enemy_spell(enemy_profile, player_profile):
-		last_defense_summary = "Your spell matched the enemy pattern and nullified the attack."
-		_log_line("Your spell matches %s strongly enough to nullify it." % spell_name)
+	var nullify_result: Dictionary = CombatStateResource.player_nullifies_enemy_spell(enemy_profile, player_profile)
+
+	if nullify_result["aspect_matched"].is_empty():
+		# No matching aspect found
+		var player_died := player.take_damage(damage)
+		_update_health_ui()
+		last_defense_summary = "%s broke through (no aspect match) and dealt %d damage." % [spell_name, damage]
+		_log_line("%s breaks through. You take %d damage." % [spell_name, damage])
+		if player_died:
+			_log_line("Your health is spent.")
 		return
 
+	# Aspect matched, show the dice roll
+	var player_dice: int = int(nullify_result["player_dice"])
+	var player_roll: int = int(nullify_result["player_roll"])
+	var enemy_dice: int = int(nullify_result["enemy_dice"])
+	var enemy_roll: int = int(nullify_result["enemy_roll"])
+	var aspect_name: String = str(nullify_result["aspect_matched"])
+
+	_log_line("Aspect clash on %s: You roll %dd6 → %d, Enemy rolls %dd6 → %d." % [
+		aspect_name, player_dice, player_roll, enemy_dice, enemy_roll
+	])
+
+	if nullify_result["nullified"]:
+		last_defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." % [aspect_name, player_roll, enemy_roll]
+		_log_line("Your spell nullifies %s." % spell_name)
+		return
+
+	# Enemy won the roll
 	var player_died := player.take_damage(damage)
 	_update_health_ui()
 
-	last_defense_summary = "%s broke through and dealt %d damage." % [spell_name, damage]
+	last_defense_summary = "%s broke through (roll lost %d vs %d) and dealt %d damage." % [spell_name, player_roll, enemy_roll, damage]
 	_log_line("%s breaks through. You take %d damage." % [spell_name, damage])
 
 	if player_died:

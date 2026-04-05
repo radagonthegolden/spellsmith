@@ -1,9 +1,24 @@
 extends RefCounted
 class_name CombatState
 
+## Combat state system for Spellsmith.
+## 
+## Each aspect intensity_rank (0-3) represents the number of dice to roll in conflicts:
+## - 0 (faint): No dice - spell is completely nullified
+## - 1 (low): 1d6
+## - 2 (medium): 2d6
+## - 3 (high): 3d6
+##
+## When player and enemy spells clash on the same aspect, both roll their dice and
+## the higher total wins. This adds meaningful randomness while still rewarding
+## higher aspect accumulation.
+
 const INTENSITY_LOW_THRESHOLD: float = 0.30
 const INTENSITY_MEDIUM_THRESHOLD: float = 0.60
 const INTENSITY_HIGH_THRESHOLD: float = 0.90
+
+# Dice system constants
+const DICE_SIDES: int = 6  # d6
 
 var aspect_names: PackedStringArray = PackedStringArray()
 var aspect_totals: Dictionary = {}
@@ -60,7 +75,7 @@ static func build_full_profile(scores: Array) -> Array:
 static func format_profile(profile: Array) -> String:
 	var parts: Array = []
 	for entry in profile:
-		parts.append(str(entry["name"]) + " " + str(entry["intensity_label"]))
+		parts.append(str(entry["name"]) + " " + str(entry["intensity_rank"]) + "d")
 	return ", ".join(parts)
 
 static func filter_display_profile(player_profile: Array, enemy_profile: Array) -> Array:
@@ -85,17 +100,52 @@ static func filter_display_profile(player_profile: Array, enemy_profile: Array) 
 
 	return displayed
 
-static func player_nullifies_enemy_spell(enemy_profile: Array, player_profile: Array) -> bool:
+## Resolves a spell collision using the dice system.
+## 
+## Returns a Dictionary with:
+## - "nullified" (bool): true if player's roll beat enemy's roll
+## - "player_dice" (int): number of dice player rolled
+## - "player_roll" (int): player's total dice roll
+## - "enemy_dice" (int): number of dice enemy rolled
+## - "enemy_roll" (int): enemy's total dice roll
+## - "aspect_matched" (string): which aspect the dice roll was for (empty if no match)
+##
+## If the player and enemy have a matching aspect, both roll dice equal to their
+## intensity_rank for that aspect. Highest roll wins. If no matching aspect exists,
+## returns with "aspect_matched" empty.
+static func player_nullifies_enemy_spell(enemy_profile: Array, player_profile: Array) -> Dictionary:
+	var result: Dictionary = {
+		"nullified": false,
+		"player_dice": 0,
+		"player_roll": 0,
+		"enemy_dice": 0,
+		"enemy_roll": 0,
+		"aspect_matched": ""
+	}
+
 	if enemy_profile.is_empty() or player_profile.is_empty():
-		return false
+		return result
 
 	var enemy_entry: Dictionary = enemy_profile[0]
 	for player_entry in player_profile:
 		if str(player_entry["name"]) != str(enemy_entry["name"]):
 			continue
-		return int(player_entry["intensity_rank"]) >= int(enemy_entry["intensity_rank"])
 
-	return false
+		var player_dice: int = int(player_entry["intensity_rank"])
+		var enemy_dice: int = int(enemy_entry["intensity_rank"])
+		var player_roll: int = _roll_dice(player_dice)
+		var enemy_roll: int = _roll_dice(enemy_dice)
+
+		result["player_dice"] = player_dice
+		result["player_roll"] = player_roll
+		result["enemy_dice"] = enemy_dice
+		result["enemy_roll"] = enemy_roll
+		result["aspect_matched"] = str(player_entry["name"])
+		result["nullified"] = player_roll >= enemy_roll
+
+		return result
+
+	return result
 
 static func build_fight_notes(
 	player: Battler,
@@ -198,6 +248,19 @@ static func _score_to_intensity_label(score: float) -> String:
 	if intensity_rank == 1:
 		return "low"
 	return "faint"
+
+static func _roll_dice(dice_count: int) -> int:
+	## Rolls dice_count d6s and returns the sum.
+	##
+	## Each die is a standard d6 (1-6). With 0 dice, returns 0.
+	## With 1 die, returns 1-6. With N dice, returns N to 6*N.
+	if dice_count <= 0:
+		return 0
+
+	var total: int = 0
+	for i in range(dice_count):
+		total += randi_range(1, DICE_SIDES)
+	return total
 
 static func _format_context_scores(current_scores: Array, progress_aspect_count: int) -> String:
 	var parts: Array = []
