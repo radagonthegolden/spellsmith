@@ -1,5 +1,5 @@
 extends Node
-class_name Spell
+class_name SpellCasting
 
 signal spell_encoded(spell_embedding: Array, text: String)
 signal initialization_finished(success: bool)
@@ -14,10 +14,7 @@ var busy := false
 
 func _ready() -> void:
 	var initialized: bool = await aspect_library.initialize()
-	if not initialized:
-		push_error("AspectLibrary failed to initialize")
-		initialization_finished.emit(false)
-		return
+	assert(initialized, "AspectLibrary failed to initialize")
 
 	loading = false
 	initialization_finished.emit(true)
@@ -34,8 +31,7 @@ func _on_spell_cast(text = null) -> void:
 	var spell_embedding: Array = await ollama_client.embed_one(cast_text, "Spell embedding")
 	busy = false
 
-	if spell_embedding.is_empty():
-		return
+	assert(not spell_embedding.is_empty(), "Spell embedding cannot be empty for cast text")
 
 	spell_encoded.emit(spell_embedding, cast_text)
 	spell_input.text = ""
@@ -43,3 +39,12 @@ func _on_spell_cast(text = null) -> void:
 
 func _on_purge_spell_usage_pressed() -> void:
 	usage_tracker.purge_usage()
+
+func score_spell_embedding(spell_embedding: Array, source_text: String) -> Array:
+	return aspect_library.score_embedding(spell_embedding, source_text)
+
+func scale_spell_scores(scores: Array, factor: float) -> Array:
+	return aspect_library.scale_scores(scores, factor)
+
+func get_aspect_names() -> PackedStringArray:
+	return aspect_library.get_aspect_names()

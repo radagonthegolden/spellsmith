@@ -1,14 +1,16 @@
 [gd_scene format=3 uid="uid://cqow47bch5ocs"]
 
-[ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://scripts/core/spell.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://scripts/core/spell_casting.gd" id="2_0xm2m"]
 [ext_resource type="Script" uid="uid://dek33f36dr6qo" path="res://scripts/core/ollama_client.gd" id="2_h2yge"]
-[ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://scripts/world/aspects_library.gd" id="3_h2yge"]
+[ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://scripts/core/aspects.gd" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://bwfs8fxn8l1qw" path="res://scripts/combat/battler.gd" id="4_2wk8u"]
 [ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat/combat_manager.gd" id="5_m3h8a"]
 [ext_resource type="PackedScene" path="res://scenes/battler_ui.tscn" id="6_2k3sj"]
-[ext_resource type="Script" path="res://scripts/core/spell_usage_tracker.gd" id="7_0dnga"]
-[ext_resource type="Script" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
-[ext_resource type="Script" path="res://scripts/ui/manuscript_writer.gd" id="9_mw1a3"]
+[ext_resource type="Script" uid="uid://cy5pr0sk0uh4t" path="res://scripts/core/spell_usage_tracker.gd" id="7_0dnga"]
+[ext_resource type="Script" uid="uid://dcj38xoyv0hwi" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
+[ext_resource type="Script" uid="uid://erumvj3nvat2" path="res://scripts/ui/manuscript_writer.gd" id="9_mw1a3"]
+[ext_resource type="Script" uid="uid://day80d1n03b65" path="res://scripts/combat/enemies.gd" id="10_e5n1y"]
+[ext_resource type="Script" uid="uid://bogmg7tbgdbrq" path="res://scripts/combat/combat_resolution.gd" id="11_h0q9f"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_shadow"]
 bg_color = Color(0.0823529, 0.0588235, 0.0352941, 0.82)
@@ -122,18 +124,18 @@ theme_override_constants/margin_right = 34
 theme_override_constants/margin_bottom = 30
 
 [node name="LoreText" type="RichTextLabel" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin" unique_id=440863412]
-script = ExtResource("9_mw1a3")
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 2
 theme_override_colors/default_color = Color(0.172549, 0.117647, 0.0705882, 1)
 theme_override_font_sizes/normal_font_size = 26
 bbcode_enabled = true
-scroll_active = true
 selection_enabled = true
+script = ExtResource("9_mw1a3")
 
 [node name="FightNotesFrame" type="PanelContainer" parent="OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns" unique_id=625818429]
-custom_minimum_size = Vector2(320, 0)
 visible = false
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_manuscript")
@@ -174,8 +176,8 @@ theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_input")
 theme_override_styles/read_only = SubResource("StyleBoxFlat_input")
 theme_override_styles/focus = SubResource("StyleBoxFlat_input")
-keep_editing_on_text_submit = true
 placeholder_text = "Write the next line..."
+keep_editing_on_text_submit = true
 clear_button_enabled = true
 
 [node name="HiddenUi" type="Control" parent="." unique_id=1134265121]
@@ -188,14 +190,14 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="TurnRow" type="HBoxContainer" parent="HiddenUi" unique_id=1716524441]
-layout_mode = 2
+layout_mode = 0
 
 [node name="TurnLabel" type="Label" parent="HiddenUi/TurnRow" unique_id=189333007]
 layout_mode = 2
 text = "Turn: Player"
 
 [node name="CombatHUD" type="HBoxContainer" parent="HiddenUi" unique_id=1817702334]
-layout_mode = 2
+layout_mode = 0
 
 [node name="PlayerCard" parent="HiddenUi/CombatHUD" unique_id=1796960431 instance=ExtResource("6_2k3sj")]
 layout_mode = 2
@@ -204,14 +206,14 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Button" type="Button" parent="HiddenUi" unique_id=111194602]
-layout_mode = 2
+layout_mode = 0
 theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
 theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
 text = "Write"
 
 [node name="PurgeUsageButton" type="Button" parent="HiddenUi" unique_id=852592323]
-layout_mode = 2
+layout_mode = 0
 theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
 theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
@@ -219,9 +221,17 @@ text = "Purge Ink"
 
 [node name="CombatManager" type="Node" parent="." unique_id=1916645604]
 script = ExtResource("5_m3h8a")
+enemies_file_path = null
+progress_aspect_count = null
+context_max_value = null
 
-[node name="SceneDirector" type="Node" parent="." unique_id=1742119347]
-script = ExtResource("8_l2gf2")
+[node name="Resolution" type="Node" parent="CombatManager" unique_id=1626664670]
+script = ExtResource("11_h0q9f")
+
+[node name="Enemies" type="Node" parent="CombatManager" unique_id=2004043312]
+script = ExtResource("10_e5n1y")
+ollama_client_path = null
+combat_resolution_path = null
 
 [node name="PlayerBattler" type="Node" parent="CombatManager" unique_id=1112674722]
 script = ExtResource("4_2wk8u")
@@ -231,19 +241,22 @@ start_health = 12
 [node name="OpponentBattler" type="Node" parent="CombatManager" unique_id=322087507]
 script = ExtResource("4_2wk8u")
 
-[node name="spell" type="Node" parent="." unique_id=1431694673]
+[node name="SceneDirector" type="Node" parent="." unique_id=1742119347]
+script = ExtResource("8_l2gf2")
+
+[node name="SpellCasting" type="Node" parent="." unique_id=1431694673]
 script = ExtResource("2_0xm2m")
 
-[node name="OllamaClient" type="Node" parent="spell" unique_id=1540099008]
+[node name="OllamaClient" type="Node" parent="SpellCasting" unique_id=1540099008]
 script = ExtResource("2_h2yge")
 
-[node name="AspectLibrary" type="Node" parent="spell" unique_id=1790970580]
+[node name="AspectLibrary" type="Node" parent="SpellCasting" unique_id=1790970580]
 script = ExtResource("3_h2yge")
 
-[node name="SpellUsageTracker" type="Node" parent="spell" unique_id=162715377]
+[node name="SpellUsageTracker" type="Node" parent="SpellCasting" unique_id=162715377]
 script = ExtResource("7_0dnga")
 
 [connection signal="text_submitted" from="OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit" to="SceneDirector" method="_on_player_submitted"]
 [connection signal="pressed" from="HiddenUi/Button" to="SceneDirector" method="_on_player_submitted"]
-[connection signal="pressed" from="HiddenUi/PurgeUsageButton" to="spell" method="_on_purge_spell_usage_pressed"]
-[connection signal="spell_encoded" from="spell" to="CombatManager" method="_on_spell_encoded"]
+[connection signal="pressed" from="HiddenUi/PurgeUsageButton" to="SpellCasting" method="_on_purge_spell_usage_pressed"]
+[connection signal="spell_encoded" from="SpellCasting" to="CombatManager" method="_on_spell_encoded"]

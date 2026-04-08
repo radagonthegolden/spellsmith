@@ -1,8 +1,7 @@
 extends Control
 
 const _OllamaScript: GDScript = preload("res://scripts/core/ollama_client.gd")
-const _AspectScript: GDScript = preload("res://scripts/world/aspects_library.gd")
-const SemanticScorerResource := preload("res://scripts/core/semantic_scorer.gd")
+const _AspectScript: GDScript = preload("res://scripts/core/aspects.gd")
 
 const BAR_WIDTH: int = 20
 const BAR_MAX: float = 0.35
@@ -120,9 +119,9 @@ func _on_cast(text: String) -> void:
 
 	var penalty: float = 1.0
 	if not raw_scores.is_empty() and not final_scores.is_empty():
-		var r: float = float(raw_scores[0]["score"])
+		var r: float = (_aspects.as_actualized(raw_scores[0]) as AspectLibrary.ActualizedAspect).score
 		if r > 0.0:
-			penalty = float(final_scores[0]["score"]) / r
+			penalty = (_aspects.as_actualized(final_scores[0]) as AspectLibrary.ActualizedAspect).score / r
 
 	_render_single(text, raw_scores, final_scores, penalty)
 	_unlock_ui("Ready — enter a spell phrase to test")
@@ -130,7 +129,8 @@ func _on_cast(text: String) -> void:
 func _render_single(spell: String, raw_scores: Array, final_scores: Array, penalty: float) -> void:
 	var raw_map: Dictionary = {}
 	for e in raw_scores:
-		raw_map[str(e["name"])] = float(e["score"])
+		var raw_data: AspectLibrary.ActualizedAspect = _aspects.as_actualized(e)
+		raw_map[raw_data.name] = raw_data.score
 
 	var lines: Array[String] = []
 	lines.append('[b]"%s"[/b]' % spell)
@@ -140,19 +140,20 @@ func _render_single(spell: String, raw_scores: Array, final_scores: Array, penal
 	lines.append("")
 
 	for e in final_scores:
-		var name: String = str(e["name"])
-		var fs: float = float(e["score"])
-		var rs: float = raw_map.get(name, 0.0)
+		var data: AspectLibrary.ActualizedAspect = _aspects.as_actualized(e)
+		var aspect_name: String = data.name
+		var fs: float = data.score
+		var rs: float = raw_map.get(aspect_name, 0.0)
 		var bar: String = _bar(fs)
 		var color: String = _color(fs)
 		var label: String = _label(fs)
 		lines.append("[color=%s][b]%-6s[/b][/color]  %s  raw %.4f → final %.4f   [i]%s[/i]" % [
-			color, label.to_upper(), bar, rs, fs, name
+			color, label.to_upper(), bar, rs, fs, aspect_name
 		])
 
 	lines.append("")
 	lines.append("[color=#888]Thresholds: low ≥ %.2f   medium ≥ %.2f   high ≥ %.2f   max entropy (uniform): %.3f[/color]" % [
-		SemanticScorerResource.INTENSITY_LOW_THRESHOLD, SemanticScorerResource.INTENSITY_MEDIUM_THRESHOLD, SemanticScorerResource.INTENSITY_HIGH_THRESHOLD, log(float(_aspects.get_aspect_names().size()))
+		SemanticScorer.INTENSITY_LOW_THRESHOLD, SemanticScorer.INTENSITY_MEDIUM_THRESHOLD, SemanticScorer.INTENSITY_HIGH_THRESHOLD, log(float(_aspects.get_aspect_names().size()))
 	])
 
 	_output.clear()
@@ -220,13 +221,13 @@ func _render_batch(results: Array) -> void:
 		var spell: String = str(result["spell"])
 		var scores: Array = result["scores"]
 		var entropy: float = float(result["entropy"])
-		var top: Dictionary = scores[0] if not scores.is_empty() else {}
-		var second: Dictionary = scores[1] if scores.size() > 1 else {}
+		var top: AspectLibrary.ActualizedAspect = _aspects.as_actualized(scores[0]) if not scores.is_empty() else null
+		var second: AspectLibrary.ActualizedAspect = _aspects.as_actualized(scores[1]) if scores.size() > 1 else null
 
-		var top_aspect: String = str(top.get("name", "?"))
-		var top_score: float = float(top.get("score", 0.0))
-		var second_aspect: String = str(second.get("name", "?"))
-		var second_score: float = float(second.get("score", 0.0))
+		var top_aspect: String = top.name if top != null else "?"
+		var top_score: float = top.score if top != null else 0.0
+		var second_aspect: String = second.name if second != null else "?"
+		var second_score: float = second.score if second != null else 0.0
 		var gap: float = top_score - second_score
 
 		lines.append("entropy [b]%.3f[/b]  gap [b]+%.4f[/b]  [color=%s]%s %.4f[/color]  vs  [color=#888]%s %.4f[/color]" % [
@@ -245,7 +246,7 @@ func _render_batch(results: Array) -> void:
 func _entropy(scores: Array) -> float:
 	var h: float = 0.0
 	for e in scores:
-		var p: float = float(e["score"])
+		var p: float = (_aspects.as_actualized(e) as AspectLibrary.ActualizedAspect).score
 		if p > 0.0:
 			h -= p * log(p)
 	return h
@@ -255,10 +256,11 @@ func _bar(score: float) -> String:
 	return "█".repeat(filled).rpad(BAR_WIDTH, "░")
 
 func _label(score: float) -> String:
-	return SemanticScorerResource.score_to_intensity_label(score)
+	return SemanticScorer.score_to_intensity_label(score)
+
 
 func _color(score: float) -> String:
-	var rank: int = SemanticScorerResource.score_to_intensity_rank(score)
+	var rank: int = SemanticScorer.score_to_intensity_rank(score)
 	match rank:
 		3: return "#e05050"
 		2: return "#d4b800"

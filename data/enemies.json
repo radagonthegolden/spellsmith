@@ -1,5 +1,5 @@
-[
-  {
+﻿{
+  "pedantic_admitter": {
     "name": "Pedantic Admitter",
     "spells": [
       {
@@ -15,7 +15,7 @@
         "damage": 2
       },
       {
-        "name": "Figured Shape of the Basin's Boundary",
+        "name": "Figured Shape of the Basin\u0027s Boundary",
         "damage": 4
       },
       {
@@ -35,7 +35,7 @@
       "A beurocractic entity that presides over the proper way to enter a place, relationship, or state of being.",
       "A pedantic and officious being that demands the correct form of address, the right sequence of actions, and the proper attitude.",
       "It dresses in elegant, clean robes, but functional and practical rather than showy.",
-      "It's wounded by imperfections, chaotic jumbles, errors and in general the uncaracthecorizable and unexpected."
+      "It\u0027s wounded by imperfections, chaotic jumbles, errors and in general the uncaracthecorizable and unexpected."
     ],
     "min_descriptor_resonance": 0.65,
     "max_descriptor_resonance": 1.0,
@@ -52,7 +52,7 @@
       }
     ]
   },
-  {
+  "false_figure": {
     "name": "False Figure",
     "spells": [
       {
@@ -109,7 +109,7 @@
       }
     ]
   },
-  {
+  "cabaret_reveler": {
     "name": "Cabaret Reveler",
     "spells": [
       {
@@ -162,7 +162,7 @@
       }
     ]
   },
-  {
+  "silent_processional": {
     "name": "Silent Processional",
     "spells": [
       {
@@ -219,7 +219,7 @@
       }
     ]
   },
-  {
+  "logician_recluse": {
     "name": "Logician Recluse",
     "spells": [
       {
@@ -276,7 +276,7 @@
       }
     ]
   },
-  {
+  "echo_harvester": {
     "name": "Echo Harvester",
     "spells": [
       {
@@ -329,7 +329,7 @@
       }
     ]
   },
-  {
+  "pale_attrition": {
     "name": "Pale Attrition",
     "spells": [
       {
@@ -386,4 +386,4 @@
       }
     ]
   }
-]
+}

@@ -101,5 +101,5 @@ func _has_pending_animation(now: float) -> bool:
 			return true
 	return false
 
-func _escape_bbcode_text(text: String) -> String:
-	return text.replace("[", "[lb]").replace("]", "[rb]")
+func _escape_bbcode_text(input_text: String) -> String:
+	return input_text.replace("[", "[lb]").replace("]", "[rb]")

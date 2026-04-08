@@ -17,10 +17,19 @@ const DEFAULT_PROMPT: String = "Write the next line..."
 @onready var ollama_client: OllamaClient = $"../spell/OllamaClient"
 
 func _ready() -> void:
+	assert(spell_input != null, "SceneDirector missing spell input LineEdit")
+	assert(manuscript != null, "SceneDirector missing manuscript writer")
+	assert(combat_manager != null, "SceneDirector missing CombatManager")
+	assert(spell != null, "SceneDirector missing Spell node")
+	assert(ollama_client != null, "SceneDirector missing OllamaClient")
+
 	combat_manager.combat_finished.connect(_on_combat_finished)
 	await ollama_client.ensure_started()
+	var initialization_success: bool = true
 	if spell.loading:
-		await spell.initialization_finished
+		initialization_success = await spell.initialization_finished
+	assert(initialization_success, "Spell initialization failed before combat start")
+	assert(not spell.loading, "Spell is still loading before combat start")
 	manuscript.clear_and_reset()
 	manuscript.append_animated("The duel begins...\n")
 	spell_input.grab_focus()
