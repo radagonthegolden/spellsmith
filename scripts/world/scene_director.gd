@@ -1,11 +1,7 @@
 extends Node
 class_name SceneDirector
 
-@export var combat_enemy_name: String = "Pedantic Admitter"
-
-# Story mode disabled for now - scene director focuses on combat startup
-# To re-enable story mode, add back: scenes_file_path, start_scene_id, exit_match_threshold
-var _scenes_file_path: String = "res://data/scenes.json"
+@export var combat_enemy_id: String = "pedantic_admitter"
 
 const DEFAULT_PROMPT: String = "Write the next line..."
 
@@ -13,27 +9,27 @@ const DEFAULT_PROMPT: String = "Write the next line..."
 @onready var manuscript = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
 
 @onready var combat_manager: CombatManager = $"../CombatManager"
-@onready var spell: Spell = $"../spell"
-@onready var ollama_client: OllamaClient = $"../spell/OllamaClient"
+@onready var spell_runtime: SpellCasting = $"../SpellCasting"
+@onready var ollama_client: OllamaClient = $"../SpellCasting/OllamaClient"
 
 func _ready() -> void:
 	assert(spell_input != null, "SceneDirector missing spell input LineEdit")
 	assert(manuscript != null, "SceneDirector missing manuscript writer")
 	assert(combat_manager != null, "SceneDirector missing CombatManager")
-	assert(spell != null, "SceneDirector missing Spell node")
+	assert(spell_runtime != null, "SceneDirector missing SpellCasting node")
 	assert(ollama_client != null, "SceneDirector missing OllamaClient")
 
 	combat_manager.combat_finished.connect(_on_combat_finished)
 	await ollama_client.ensure_started()
 	var initialization_success: bool = true
-	if spell.loading:
-		initialization_success = await spell.initialization_finished
+	if spell_runtime.loading:
+		initialization_success = await spell_runtime.initialization_finished
 	assert(initialization_success, "Spell initialization failed before combat start")
-	assert(not spell.loading, "Spell is still loading before combat start")
+	assert(not spell_runtime.loading, "Spell is still loading before combat start")
 	manuscript.clear_and_reset()
 	manuscript.append_animated("The duel begins...\n")
 	spell_input.grab_focus()
-	await combat_manager.start_battle(combat_enemy_name)
+	await combat_manager.start_battle(combat_enemy_id)
 
 func _on_player_submitted(text = null) -> void:
 	var submitted_text: String = _extract_text(text)
@@ -42,9 +38,9 @@ func _on_player_submitted(text = null) -> void:
 
 	# Combat is always active at startup
 	if combat_manager.active:
-		await spell._on_spell_cast(submitted_text)
+		await spell_runtime._on_spell_cast(submitted_text)
 
-func _on_combat_finished(player_won: bool) -> void:
+func _on_combat_finished(_player_won: bool) -> void:
 	# Combat finished - can add post-battle logic here
 	pass
 

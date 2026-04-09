@@ -75,3 +75,67 @@ static func subtract_vector(a: Array, b: Array) -> Array:
 	for i in range(a.size()):
 		out[i] = float(a[i]) - float(b[i])
 	return out
+
+static func cosine_similarity_scores(source_embedding: Array, target_vectors: Dictionary) -> Dictionary:
+	if target_vectors.is_empty():
+		return {}
+
+	var scores := {}
+	for target_name in target_vectors:
+		scores[target_name] = cosine_similarity(source_embedding, target_vectors[target_name])
+	return scores
+
+static func centered_cosine_similarity_scores(source_embedding: Array, target_vectors: Dictionary) -> Dictionary:
+	if target_vectors.is_empty():
+		return {}
+
+	var target_mean: Array = compute_vector_mean(target_vectors)
+	if target_mean.is_empty():
+		return {}
+
+	var centered_source: Array = subtract_vector(source_embedding, target_mean)
+	if centered_source.is_empty():
+		return {}
+
+	var scores := {}
+	for target_name in target_vectors:
+		var centered_target: Array = subtract_vector(target_vectors[target_name], target_mean)
+		scores[target_name] = cosine_similarity(centered_source, centered_target)
+	return scores
+
+static func softmax(scores: Dictionary, temperature: float = 1.0) -> Dictionary:
+	if scores.is_empty():
+		return {}
+
+	var temp := maxf(temperature, 0.001)
+	var max_score := -INF
+
+	for value in scores.values():
+		max_score = max(max_score, float(value))
+
+	var exps := {}
+	var total := 0.0
+
+	for key in scores:
+		var e := exp((float(scores[key]) - max_score) / temp)
+		exps[key] = e
+		total += e
+
+	if total <= 0.0:
+		return exps
+
+	for key in exps:
+		exps[key] /= total
+
+	return exps
+
+static func sort_named_scores(scores: Dictionary) -> Array:
+	var items: Array = scores.keys().map(func(key):
+		return {
+			"name": key,
+			"score": scores[key]
+		}
+	)
+
+	items.sort_custom(func(a, b): return a["score"] > b["score"])
+	return items

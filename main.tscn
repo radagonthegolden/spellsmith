@@ -10,7 +10,6 @@
 [ext_resource type="Script" uid="uid://dcj38xoyv0hwi" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
 [ext_resource type="Script" uid="uid://erumvj3nvat2" path="res://scripts/ui/manuscript_writer.gd" id="9_mw1a3"]
 [ext_resource type="Script" uid="uid://day80d1n03b65" path="res://scripts/combat/enemies.gd" id="10_e5n1y"]
-[ext_resource type="Script" uid="uid://bogmg7tbgdbrq" path="res://scripts/combat/combat_resolution.gd" id="11_h0q9f"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_shadow"]
 bg_color = Color(0.0823529, 0.0588235, 0.0352941, 0.82)
@@ -221,17 +220,9 @@ text = "Purge Ink"
 
 [node name="CombatManager" type="Node" parent="." unique_id=1916645604]
 script = ExtResource("5_m3h8a")
-enemies_file_path = null
-progress_aspect_count = null
-context_max_value = null
-
-[node name="Resolution" type="Node" parent="CombatManager" unique_id=1626664670]
-script = ExtResource("11_h0q9f")
 
 [node name="Enemies" type="Node" parent="CombatManager" unique_id=2004043312]
 script = ExtResource("10_e5n1y")
-ollama_client_path = null
-combat_resolution_path = null
 
 [node name="PlayerBattler" type="Node" parent="CombatManager" unique_id=1112674722]
 script = ExtResource("4_2wk8u")
