@@ -3,6 +3,7 @@ class_name Enemies
 
 @onready var ollama_client: OllamaClient = $"../../SpellCasting/OllamaClient"
 @onready var spell_runtime: SpellCasting = $"../../SpellCasting"
+@onready var vector_math: VectorMath = $"../../SpellCasting/VectorMath"
 
 class EnemyDefinition extends RefCounted:
 	var name: String = ""
@@ -16,7 +17,7 @@ class EnemyDefinition extends RefCounted:
 
 var enemies: Dictionary = {}
 
-static func load_enemy(enemy_name: String) -> EnemyDefinition:
+func load_enemy(enemy_name: String) -> EnemyDefinition:
 	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	var file: FileAccess = FileAccess.open("res://data/enemies.json", FileAccess.READ)
 	assert(file != null, "Failed to open enemy file")
@@ -40,7 +41,7 @@ static func load_enemy(enemy_name: String) -> EnemyDefinition:
 
 	var descriptions: Array = out.descriptor_sentences
 	var embeddings: Array = await ollama_client.embed(descriptions, "Enemy descriptor")
-	out.descriptor = VectorMath.average_embeddings(embeddings)
+	out.descriptor = vector_math.average_embeddings(embeddings)
 
 	var parsed_spells: Array = []
 	for spell_dict in source["spells"]:
@@ -53,7 +54,7 @@ static func load_enemy(enemy_name: String) -> EnemyDefinition:
 
 	return out
 
-static func get_enemy(enemy_name: String) -> EnemyDefinition:
+func get_enemy(enemy_name: String) -> EnemyDefinition:
 	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	if enemies.has(enemy_id):
 		return enemies[enemy_id]
@@ -61,15 +62,15 @@ static func get_enemy(enemy_name: String) -> EnemyDefinition:
 	enemies[enemy_id] = enemy
 	return enemy
 
-static func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
 	return enemy_def.spells[randi_range(0, enemy_def.spells.size() - 1)]
 
-static func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
 	var spell_def: SpellCasting.EnemySpell = get_random_spell(enemy_def)
 	return await spell_runtime.cast_spell(spell_def)
 
-static func effective_resonance(enemy: EnemyDefinition, embedding: Array) -> float:
-	return VectorMath.resonance(
+func effective_resonance(enemy: EnemyDefinition, embedding: Array) -> float:
+	return vector_math.resonance(
 		embedding, 
 		enemy.descriptor, 
 		enemy.min_descriptor_resonance,

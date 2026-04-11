@@ -119,9 +119,9 @@ func _on_cast(text: String) -> void:
 
 	var penalty: float = 1.0
 	if not raw_scores.is_empty() and not final_scores.is_empty():
-		var r: float = (AspectLibrary.as_actualized(raw_scores[0]) as AspectLibrary.ActualizedAspect).score
+		var r: float = (_aspects.as_actualized(raw_scores[0]) as AspectLibrary.ActualizedAspect).score
 		if r > 0.0:
-			penalty = (AspectLibrary.as_actualized(final_scores[0]) as AspectLibrary.ActualizedAspect).score / r
+			penalty = (_aspects.as_actualized(final_scores[0]) as AspectLibrary.ActualizedAspect).score / r
 
 	_render_single(text, raw_scores, final_scores, penalty)
 	_unlock_ui("Ready — enter a spell phrase to test")
@@ -129,7 +129,7 @@ func _on_cast(text: String) -> void:
 func _render_single(spell: String, raw_scores: Array, final_scores: Array, penalty: float) -> void:
 	var raw_map: Dictionary = {}
 	for e in raw_scores:
-		var raw_data: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(e)
+		var raw_data: AspectLibrary.ActualizedAspect = _aspects.as_actualized(e)
 		raw_map[raw_data.name] = raw_data.score
 
 	var lines: Array[String] = []
@@ -140,7 +140,7 @@ func _render_single(spell: String, raw_scores: Array, final_scores: Array, penal
 	lines.append("")
 
 	for e in final_scores:
-		var data: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(e)
+		var data: AspectLibrary.ActualizedAspect = _aspects.as_actualized(e)
 		var aspect_name: String = data.name
 		var fs: float = data.score
 		var rs: float = raw_map.get(aspect_name, 0.0)
@@ -153,7 +153,7 @@ func _render_single(spell: String, raw_scores: Array, final_scores: Array, penal
 
 	lines.append("")
 	lines.append("[color=#888]Thresholds: low ≥ %.2f   medium ≥ %.2f   high ≥ %.2f   max entropy (uniform): %.3f[/color]" % [
-		AspectLibrary.INTENSITY_LOW_THRESHOLD, AspectLibrary.INTENSITY_MEDIUM_THRESHOLD, AspectLibrary.INTENSITY_HIGH_THRESHOLD, log(float(_aspects.get_aspect_names().size()))
+		_aspects.INTENSITY_LOW_THRESHOLD, _aspects.INTENSITY_MEDIUM_THRESHOLD, _aspects.INTENSITY_HIGH_THRESHOLD, log(float(_aspects.get_aspect_names().size()))
 	])
 
 	_output.clear()
@@ -221,8 +221,8 @@ func _render_batch(results: Array) -> void:
 		var spell: String = str(result["spell"])
 		var scores: Array = result["scores"]
 		var entropy: float = float(result["entropy"])
-		var top: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(scores[0]) if not scores.is_empty() else null
-		var second: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(scores[1]) if scores.size() > 1 else null
+		var top: AspectLibrary.ActualizedAspect = _aspects.as_actualized(scores[0]) if not scores.is_empty() else null
+		var second: AspectLibrary.ActualizedAspect = _aspects.as_actualized(scores[1]) if scores.size() > 1 else null
 
 		var top_aspect: String = top.name if top != null else "?"
 		var top_score: float = top.score if top != null else 0.0
@@ -246,7 +246,7 @@ func _render_batch(results: Array) -> void:
 func _entropy(scores: Array) -> float:
 	var h: float = 0.0
 	for e in scores:
-		var p: float = (AspectLibrary.as_actualized(e) as AspectLibrary.ActualizedAspect).score
+		var p: float = (_aspects.as_actualized(e) as AspectLibrary.ActualizedAspect).score
 		if p > 0.0:
 			h -= p * log(p)
 	return h
@@ -256,11 +256,11 @@ func _bar(score: float) -> String:
 	return "█".repeat(filled).rpad(BAR_WIDTH, "░")
 
 func _label(score: float) -> String:
-	return AspectLibrary.score_to_intensity_label(score)
+	return _aspects.score_to_intensity_label(score)
 
 
 func _color(score: float) -> String:
-	var rank: int = AspectLibrary.score_to_intensity_rank(score)
+	var rank: int = _aspects.score_to_intensity_rank(score)
 	match rank:
 		3: return "#e05050"
 		2: return "#d4b800"

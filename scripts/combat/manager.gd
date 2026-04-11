@@ -18,10 +18,18 @@ signal combat_finished(player_won: bool)
 @onready var fight_notes: RichTextLabel = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/FightNotesFrame/FightNotesMargin/FightNotes"
 @onready var spell_runtime: SpellCasting = $"../SpellCasting"
 @onready var enemy_library: Enemies = $Enemies
+@onready var vector_math: VectorMath = $"../SpellCasting/VectorMath"
+@onready var collision_engine: CollisionEngine = $CollisionEngine
+@onready var fight_notes_renderer: FightNotesRenderer = $FightNotesRenderer
+@onready var aspect_library: Aspects = $"../SpellCasting/AspectLibrary"
+
+const DICE_SIDES = 6
+enum TurnResult { PLAYER_WON, ENEMY_WON, ONGOING }
 
 var active: bool = false
 var current_enemy: Enemies.EnemyDefinition = null
 var prepared_enemy_spell: SpellCasting.Spell = null
+var context_state := {}
 
 var last_player_spell_name: String = ""
 var last_player_resonance: float = 0.0
@@ -44,7 +52,9 @@ func start_battle(enemy_id: String = "pedantic_admitter") -> void:
 	opponent.reset_health()
 	player.display_name = "You"
 	opponent.display_name = enemy.name
-	_state_setup(spell_runtime.get_aspect_names(), context_max_value)
+	
+	for aspect_name in aspect_library.get_aspect_names():
+		context_state[aspect_name] = 0
 
 	player_ui.set_name_text(player.display_name)
 	opponent_ui.set_name_text(opponent.display_name)
@@ -56,92 +66,52 @@ func start_battle(enemy_id: String = "pedantic_admitter") -> void:
 	_log_line("")
 	_log_line("A hostile presence condenses into the manuscript.")
 
-	_prepare_enemy_spell(enemy)
+	prepared_enemy_spell = await _prepare_enemy_spell(enemy)
 	_refresh_fight_notes()
 
-func _on_player_spell_cast(spell: SpellCasting.Spell) -> void:
-	if not active:
-		return
-
+func _on_player_spell_cast(spell_name: String) -> TurnResult:
 	turn_label.text = "Turn: Player"
 
-	var spell: SpellCasting.Spell = spell_runtime.text_to_spell(spell_name)
-	var spell_aspect_scores: Array = spell_runtime.score_spell_embedding(spell.spell_embedding, spell.name)
-	var effective_resonance: float = _get_effective_resonance(
-		VectorMath.cosine_similarity(spell_embedding, descriptor_vector)
+	var player_spell: SpellCasting.Spell = await spell_runtime.cast_spell_on_enemy(
+		spell_name,
+		current_enemy
 	)
-	var effective_scores: Array = spell_runtime.scale_spell_scores(spell_aspect_scores, effective_resonance)
-
-	last_context_update = _state_apply_spell(effective_scores)
-	last_player_spell_name = text
-	last_player_resonance = effective_resonance
-	last_player_profile = spell_runtime.build_full_profile(effective_scores)
-	_assert_prepared_enemy_spell_invariant()
 
 	var displayed_player_profile: Array = spell_runtime.filter_display_profile(
-		last_player_profile,
-		prepared_enemy_spell.intensity_profile
+		player_spell.actualized,
+		prepared_enemy_spell.actualized
 	)
 
 	_log_line(
 		"You cast \"%s\". Resonance %s. Pattern: %s." % [
-			text,
-			str(snappedf(effective_resonance, 0.01)),
+			spell_name,
+			str(snappedf(player_spell.resonance, 0.01)),
 			spell_runtime.format_profile(displayed_player_profile)
 		]
 	)
 
-	if _state_meets_conditions(current_enemy.player_victory_conditions):
+	for aspect_name in context_state.keys():
+		context_state[aspect_name] += player_spell.actualized[aspect_name].intensity_rank
+
+	if _meets_conditions(current_enemy.player_victory_conditions):
 		turn_label.text = "Turn: Victory"
 		last_defense_summary = "Your spell completed the victory condition before the enemy attack could land."
 		_refresh_fight_notes()
 		_log_line("The context settles into a shape that breaks %s. Victory." % opponent.display_name)
 		_finish_battle(true)
-		return
+		return TurnResult.PLAYER_WON
 
-	_resolve_enemy_spell_collision(last_player_profile)
-	_refresh_fight_notes()
-
-	if player.health <= 0:
-		turn_label.text = "Turn: Defeat"
-		_log_line("Your body gives out before the context yields. Defeat.")
-		_finish_battle(false)
-		return
-
-	if _state_meets_conditions(current_enemy.player_loss_conditions):
-		turn_label.text = "Turn: Defeat"
-		_log_line("%s draws the context into its own design. Defeat." % opponent.display_name)
-		_finish_battle(false)
-		return
-
-	turn_label.text = "Turn: Player"
-	_prepare_enemy_spell(current_enemy)
-	_refresh_fight_notes()
-
-func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemySpell:
-	prepared_enemy_spell = await enemy_library.cast_random_spell(enemy)
-	_log_line(
-		"%s casts %s. Pattern: %s. Damage: %d." % [
-			opponent.display_name,
-			prepared_enemy_spell.name,
-			spell_runtime.format_profile(prepared_enemy_spell.intensity_profile),
-			prepared_enemy_spell.damage
-		]
+	var collision_result := _resolve_spell_collision(
+		prepared_enemy_spell.actualized[0], 
+		prepared_enemy_spell.actualized
 	)
-	return prepared_enemy_spell
-
-func _resolve_enemy_spell_collision(player_profile: Array) -> void:
-	_assert_prepared_enemy_spell_invariant()
-
-	var enemy_profile: Array = prepared_enemy_spell.intensity_profile
-	var damage: int = prepared_enemy_spell.damage
-	var spell_name: String = prepared_enemy_spell.name
-
-	var player_died: bool = false
-
-	var collision_result: Dictionary = CollisionEngine.resolve_spell_collision(enemy_profile, player_profile, damage)
-	if collision_result["aspect_matched"] == "":
-		var damage_to_apply := int(collision_result["damage_dealt"])
+	var pd := int(collision_result["player_dice"])
+	var pr := int(collision_result["player_roll"])
+	var ed := int(collision_result["enemy_dice"])
+	var er := int(collision_result["enemy_roll"])
+	var player_died := false
+	if collision_result["player_roll"] < collision_result["enemy_roll"]:
+		var damage_to_apply : int = prepared_enemy_spell.damage
 		if damage_to_apply > 0:
 			player_died = player.take_damage(damage_to_apply)
 			_update_health_ui()
@@ -152,29 +122,52 @@ func _resolve_enemy_spell_collision(player_profile: Array) -> void:
 		else:
 			last_defense_summary = "%s had no matching aspect and fizzled." % spell_name
 			_log_line("%s casts %s but it fizzles with no matching aspects." % [opponent.display_name, spell_name])
-		return
-
-	var pd := int(collision_result["player_dice"])
-	var pr := int(collision_result["player_roll"])
-	var ed := int(collision_result["enemy_dice"])
-	var er := int(collision_result["enemy_roll"])
-	var aspect := str(collision_result["aspect_matched"])
-	_log_line("%s casts %s targeting %s — %dd vs %dd. Player rolled %d, enemy rolled %d." % [opponent.display_name, spell_name, aspect, pd, ed, pr, er])
-
-	if collision_result["nullified"]:
-		last_defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." % [aspect, pr, er]
+		_log_line("%s casts %s targeting %s — %dd vs %dd. Player rolled %d, enemy rolled %d." \
+		% [opponent.display_name, spell_name, prepared_enemy_spell.actualized[0].name, pd, ed, pr, er])
+	else:
+		last_defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." \
+		% [prepared_enemy_spell.actualized[0].name, pr, er]
 		_log_line("Your spell nullifies %s." % spell_name)
-		return
 
-	# Enemy won the roll
-	player_died = player.take_damage(int(collision_result["damage_dealt"]))
-	_update_health_ui()
-
-	last_defense_summary = "%s broke through (roll lost %d vs %d) and dealt %d damage." % [spell_name, pr, er, collision_result["damage_dealt"]]
-	_log_line("%s breaks through. You take %d damage." % [spell_name, collision_result["damage_dealt"]])
+	_refresh_fight_notes()
 
 	if player_died:
-		_log_line("Your health is spent.")
+		turn_label.text = "Turn: Defeat"
+		_log_line("Your body gives out before the context yields. Defeat.")
+		_finish_battle(false)
+		return TurnResult.ENEMY_WON
+
+	if _meets_conditions(current_enemy.player_loss_conditions):
+		turn_label.text = "Turn: Defeat"
+		_log_line("%s draws the context into its own design. Defeat." % opponent.display_name)
+		_finish_battle(false)
+		return TurnResult.ENEMY_WON
+
+	turn_label.text = "Turn: Player"
+	_prepare_enemy_spell(current_enemy)
+	_refresh_fight_notes()
+	return TurnResult.ONGOING
+
+func _meets_conditions(conditions: Array) -> bool:
+	for condition in conditions:
+		if context_state[condition["aspect"]] >= int(condition["intensity"]):
+			return true
+	return false
+
+func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemySpell:
+	prepared_enemy_spell = await enemy_library.cast_random_spell(enemy)
+
+	_log_line(
+		"%s casts %s. Pattern: %s. Damage: %d." % [
+			opponent.display_name,
+			prepared_enemy_spell.name,
+			spell_runtime.format_profile(prepared_enemy_spell.actualized),
+			prepared_enemy_spell.damage
+		]
+	)
+
+	return prepared_enemy_spell
+
 
 func _update_health_ui() -> void:
 	player_ui.set_health(player.health, player.max_health)
@@ -187,7 +180,7 @@ func _refresh_fight_notes() -> void:
 
 	fight_notes.clear()
 	fight_notes.append_text(
-		FightNotesRenderer.build_fight_notes(
+		fight_notes_renderer.build_fight_notes(
 			spell_runtime,
 			player,
 			prepared_enemy_spell,
@@ -205,9 +198,6 @@ func _refresh_fight_notes() -> void:
 func _finish_battle(player_won: bool) -> void:
 	active = false
 	current_enemy = null
-	descriptor_vector.clear()
-	_state_clear()
-	_reset_round_state()
 	fight_notes.text = ""
 	_set_ui_visible(false)
 	combat_finished.emit(player_won)
@@ -226,3 +216,35 @@ func _log_line(message: String) -> void:
 
 func _set_ui_visible(value: bool) -> void:
 	fight_notes_frame.visible = value
+
+static func _collide_spells(
+	enemy_aspect: Aspects.ActualizedAspect,
+	player_profile: Array
+	) -> Dictionary:
+
+	var result: Dictionary = {
+		"player_dice": 0,
+		"player_roll": 0,
+		"enemy_dice": 0,
+		"enemy_roll": 0,
+	}
+
+	var player_aspect : Aspects.ActualizedAspect = player_profile[enemy_aspect.name]
+	var player_dice: int = player_aspect.intensity_rank
+	var enemy_dice: int = enemy_aspect.intensity_rank
+
+	var player_roll: int = _roll_dice(player_dice)
+	var enemy_roll: int = _roll_dice(enemy_dice)
+
+	result["player_dice"] = player_dice
+	result["player_roll"] = player_roll
+	result["enemy_dice"] = enemy_dice
+	result["enemy_roll"] = enemy_roll
+
+	return result
+
+static func _roll_dice(dice_count: int) -> int:
+	var total: int = 0
+	for _i in range(dice_count):
+		total += randi_range(1, DICE_SIDES)
+	return total

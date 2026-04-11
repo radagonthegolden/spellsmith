@@ -1,5 +1,6 @@
 extends RefCounted
 class_name FightNotesRenderer
+@onready var aspect_library: AspectLibrary = $"../../SpellCasting/AspectLibrary"
 
 static func build_fight_notes(
 	spell_runtime: SpellCasting,
@@ -55,7 +56,7 @@ static func _format_context_scores(current_scores: Array, progress_aspect_count:
 	var parts: Array = []
 	var limit: int = mini(progress_aspect_count, current_scores.size())
 	for i in range(limit):
-		var entry: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(current_scores[i])
+		var entry: AspectLibrary.ActualizedAspect = aspect_library.as_actualized(current_scores[i])
 		parts.append(entry.name + " " + str(int(entry.score)))
 	return ", ".join(parts)
 

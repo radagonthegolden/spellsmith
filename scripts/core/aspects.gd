@@ -1,5 +1,5 @@
 extends Node
-class_name AspectLibrary
+class_name Aspects
 
 class AspectDefinition extends RefCounted:
 	var name: String = ""
@@ -18,19 +18,23 @@ const INTENSITY_HIGH_THRESHOLD: float = 0.90
 
 @export var aspects_file_path: String = "res://data/aspects.json"
 @export var ollama_client_path: NodePath = "../OllamaClient"
+@export var vector_math_path: NodePath = "../VectorMath"
 @export var length_penalty_reference_words: float = 4.0
 @export var length_penalty_sqrt_scale: float = 1.0
 @export var length_penalty_min_factor: float = 0.5
 @export var softmax_temperature: float = 0.2
 
+@onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
+@onready var vector_math: VectorMath = get_node_or_null(vector_math_path)
+
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-static func text_to_actualized(text: String, return_embedding: bool = false, factor: float = 1.0) -> Variant:
+func text_to_actualized(text: String, return_embedding: bool = false, factor: float = 1.0) -> Variant:
 	assert(is_ready, "AspectLibrary is not initialized")
-	var embedding: Array = await OllamaClient.embed(text, "Scoring text: " + text)
+	var embedding: Array = await ollama_client.embed(text, "Scoring text: " + text)
 	var penalty_factor: float = _get_length_penalty_factor(text)
-	var scores := VectorMath.get_sorted_scores(embedding, DEFINITIONS)
+	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
 	var scaled_data := scores.map(func(number): return number * factor * penalty_factor) 
 	var out: Array = []
 	for raw_entry in scaled_data:
@@ -41,7 +45,7 @@ static func text_to_actualized(text: String, return_embedding: bool = false, fac
 
 	return {"actualized": out, "embedding": embedding} if return_embedding else out
 
-static func initialize() -> bool:
+func initialize() -> bool:
 	is_ready = false
 	DEFINITIONS = {}
 	assert(ollama_client != null, "AspectLibrary missing OllamaClient dependency")
@@ -60,20 +64,20 @@ static func initialize() -> bool:
 	
 	return true
 
-static func scale_actualized(aspects: Array, factor: float) -> Array:
+func scale_actualized(aspects: Array, factor: float) -> Array:
 	var out: Array = []
 	for entry in aspects:
 		var actualized: ActualizedAspect = _make_actualized(str(entry["name"]), float(entry["score"]))
 		out.append(_make_actualized(actualized.name, actualized.score * factor))
 	return out
 
-static func get_aspect_names() -> PackedStringArray:
-	var names: Array[String] = []
+func get_aspect_names() -> PackedStringArray:
+	var names := []
 	for definition in DEFINITIONS.values():
 		names.append(definition.name)
-	return PackedStringArray(names)
+	return names
 
-static func _make_actualized(aspect_name: String, aspect_score: float) -> ActualizedAspect:
+func _make_actualized(aspect_name: String, aspect_score: float) -> ActualizedAspect:
 	var out: ActualizedAspect = ActualizedAspect.new()
 	out.name = aspect_name
 	out.score = aspect_score
@@ -95,7 +99,7 @@ static func _make_actualized(aspect_name: String, aspect_score: float) -> Actual
 		out.intensity_label = "faint"
 	return out
 
-static func _load_aspect_data(file_path: String) -> Dictionary:
+func _load_aspect_data(file_path: String) -> Dictionary:
 	assert(FileAccess.file_exists(file_path), "Aspect file not found: " + file_path)
 
 	var file: FileAccess = FileAccess.open(file_path, FileAccess.READ)
@@ -110,7 +114,7 @@ static func _load_aspect_data(file_path: String) -> Dictionary:
 
 	return json.data
 
-static func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
+func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
 	var embeddings: Array = await ollama_client.embed_many(phrases, "Aspect embedding: " + aspect_name)
 	assert(not embeddings.is_empty(), "Empty embeddings for aspect: " + aspect_name)
 
@@ -118,12 +122,12 @@ static func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
 	for phrase in phrases:
 		weights.append(_get_length_penalty_factor(str(phrase)))
 
-	var averaged: Array = VectorMath.weighted_average_embeddings(embeddings, weights)
+	var averaged: Array = vector_math.weighted_average_embeddings(embeddings, weights)
 	assert(not averaged.is_empty(), "Invalid averaged embedding for aspect: " + aspect_name)
 
 	return averaged
 
-static func _get_length_penalty_factor(text: String) -> float:
+func _get_length_penalty_factor(text: String) -> float:
 	var normalized: String = text.strip_edges()
 	if normalized.is_empty():
 		return 1.0
@@ -133,7 +137,7 @@ static func _get_length_penalty_factor(text: String) -> float:
 	var penalty: float = length_penalty_sqrt_scale / sqrt(adjusted_word_count)
 	return clampf(penalty, length_penalty_min_factor, 1.0)
 
-static func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embedding: Array) -> AspectDefinition:
+func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embedding: Array) -> AspectDefinition:
 	var out: AspectDefinition = AspectDefinition.new()
 	out.name = aspect_name
 	out.phrases = aspect_phrases

@@ -15,22 +15,28 @@ signal spell_encoded(spell_name: String)
 signal initialization_finished(success: bool)
 
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
+@onready var aspect_library: AspectLibrary = $AspectLibrary
+@onready var usage_tracker: SpellUsageTracker = $SpellUsageTracker
+@onready var enemies_runtime: Enemies = $"../CombatManager/Enemies"
 
 var loading := true
 var busy := false
 
-func cast_spell_on_enemy(spell: Spell, enemy: Enemies.EnemyDefinition) -> Spell:
-	var effective_resonance: float = Enemies.effective_resonance(enemy, spell.embedding)
-	return await cast_spell(spell, effective_resonance)
+func cast_spell_on_enemy(spell_name: String, enemy: Enemies.EnemyDefinition) -> Spell:
+	var spell: Spell = await _text_to_spell(spell_name)
+	var effective_resonance: float = enemies_runtime.effective_resonance(enemy, spell.embedding)
+	var cast_spell: Spell = await _text_to_spell(spell_name, effective_resonance)
+	cast_spell.resonance = effective_resonance
+	return cast_spell
 
-func cast_spell(spell: Variant, factor: float = 1.0) -> Spell:
+func _actualize_spell(spell: Variant, factor: float = 1.0) -> Variant:
 	if spell is EnemySpell:
 		spell.spell = await _text_to_spell(spell.spell.name, factor)
 		return spell
 	return await _text_to_spell(spell.name, factor)
 
 func _text_to_spell(spell_name: String, factor: float = 1.0) -> Spell:
-	var returned: Variant = await AspectLibrary.text_to_actualized(spell_name, true, factor)
+	var returned: Variant = await aspect_library.text_to_actualized(spell_name, true, factor)
 	var actualized: Array = returned["actualized"]
 	var embedding: Array = returned["embedding"]
 	return create_spell(spell_name, embedding, actualized)

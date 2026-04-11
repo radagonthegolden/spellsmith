@@ -10,6 +10,10 @@
 [ext_resource type="Script" uid="uid://dcj38xoyv0hwi" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
 [ext_resource type="Script" uid="uid://erumvj3nvat2" path="res://scripts/ui/manuscript_writer.gd" id="9_mw1a3"]
 [ext_resource type="Script" uid="uid://day80d1n03b65" path="res://scripts/combat/enemies.gd" id="10_e5n1y"]
+[ext_resource type="Script" uid="uid://b2hp83akoia3q" path="res://scripts/core/vector_math.gd" id="11_w8ajc"]
+[ext_resource type="Script" uid="uid://bxsunhtdtofro" path="res://scripts/combat/collision_engine.gd" id="12_ghm9x"]
+[ext_resource type="Script" uid="uid://cujsesxvkboar" path="res://scripts/combat/fight_notes_renderer.gd" id="13_3kr90"]
+[ext_resource type="Script" uid="uid://cnhlit0mlgekt" path="res://scripts/combat/state.gd" id="14_8yq0k"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_shadow"]
 bg_color = Color(0.0823529, 0.0588235, 0.0352941, 0.82)
@@ -221,6 +225,15 @@ text = "Purge Ink"
 [node name="CombatManager" type="Node" parent="." unique_id=1916645604]
 script = ExtResource("5_m3h8a")
 
+[node name="CollisionEngine" type="Node" parent="CombatManager" unique_id=196438274]
+script = ExtResource("12_ghm9x")
+
+[node name="FightNotesRenderer" type="Node" parent="CombatManager" unique_id=1734028183]
+script = ExtResource("13_3kr90")
+
+[node name="State" type="Node" parent="CombatManager" unique_id=188104233]
+script = ExtResource("14_8yq0k")
+
 [node name="Enemies" type="Node" parent="CombatManager" unique_id=2004043312]
 script = ExtResource("10_e5n1y")
 
@@ -243,6 +256,9 @@ script = ExtResource("2_h2yge")
 
 [node name="AspectLibrary" type="Node" parent="SpellCasting" unique_id=1790970580]
 script = ExtResource("3_h2yge")
+
+[node name="VectorMath" type="Node" parent="SpellCasting" unique_id=218967177]
+script = ExtResource("11_w8ajc")
 
 [node name="SpellUsageTracker" type="Node" parent="SpellCasting" unique_id=162715377]
 script = ExtResource("7_0dnga")

@@ -4,13 +4,14 @@ var state_aspect_names: PackedStringArray = PackedStringArray()
 var state_aspect_totals: Dictionary = {}
 var state_current_scores: Array = []
 var state_max_value: int = 6
+@onready var aspect_library: AspectLibrary = $"../../SpellCasting/AspectLibrary"
 
 func _state_setup(next_aspect_names: PackedStringArray, next_max_value: int) -> void:
 	state_aspect_names = next_aspect_names
 	state_max_value = next_max_value
 	state_aspect_totals.clear()
 	for aspect_name in state_aspect_names:
-		state_aspect_totals[str(aspect_name)] = 0
+		state_aspect_totals[aspect_name] = 0
 	_state_rebuild_scores()
 
 func _state_clear() -> void:
@@ -24,7 +25,7 @@ func _state_apply_spell(effective_scores: Array) -> Dictionary:
 		var name_text: String = str(aspect_name)
 		assert(state_aspect_totals.has(name_text), "Missing aspect total for: " + name_text)
 		var current_value: int = int(state_aspect_totals[name_text])
-		var update_value: int = AspectLibrary.score_to_intensity_rank(_state_score_for_aspect(effective_scores, name_text))
+		var update_value: int = aspect_library.score_to_intensity_rank(_state_score_for_aspect(effective_scores, name_text))
 		var next_value: int = _state_update_value(current_value, update_value)
 		state_aspect_totals[name_text] = next_value
 		delta_by_aspect[name_text] = next_value - current_value
@@ -40,7 +41,7 @@ func _state_meets_conditions(conditions: Array) -> bool:
 
 func _state_get_value(aspect_name: String) -> int:
 	for entry in state_current_scores:
-		var aspect_data: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(entry)
+		var aspect_data: AspectLibrary.ActualizedAspect = aspect_library.as_actualized(entry)
 		if aspect_data.name == aspect_name:
 			return int(aspect_data.score)
 	return 0
@@ -50,7 +51,7 @@ func _state_get_scores() -> Array:
 
 func _state_score_for_aspect(scores: Array, aspect_name: String) -> float:
 	for entry in scores:
-		var aspect_data: AspectLibrary.ActualizedAspect = AspectLibrary.as_actualized(entry)
+		var aspect_data: AspectLibrary.ActualizedAspect = aspect_library.as_actualized(entry)
 		if aspect_data.name == aspect_name:
 			return aspect_data.score
 	assert(false, "Missing score entry for aspect: " + aspect_name)
@@ -69,5 +70,5 @@ func _state_update_value(current_value: int, update_value: int) -> int:
 func _state_rebuild_scores() -> void:
 	state_current_scores.clear()
 	for aspect_name in state_aspect_totals.keys():
-		state_current_scores.append(AspectLibrary.make_actualized(str(aspect_name), float(state_aspect_totals[aspect_name])))
+		state_current_scores.append(aspect_library.make_actualized(str(aspect_name), float(state_aspect_totals[aspect_name])))
 	state_current_scores.sort_custom(func(a, b): return (a as AspectLibrary.ActualizedAspect).score > (b as AspectLibrary.ActualizedAspect).score)
