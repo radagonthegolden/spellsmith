@@ -16,7 +16,7 @@ class EnemyDefinition extends RefCounted:
 
 var enemies: Dictionary = {}
 
-func load_enemy(enemy_name: String) -> EnemyDefinition:
+static func load_enemy(enemy_name: String) -> EnemyDefinition:
 	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	var file: FileAccess = FileAccess.open("res://data/enemies.json", FileAccess.READ)
 	assert(file != null, "Failed to open enemy file")
@@ -53,7 +53,7 @@ func load_enemy(enemy_name: String) -> EnemyDefinition:
 
 	return out
 
-func get_enemy(enemy_name: String) -> EnemyDefinition:
+static func get_enemy(enemy_name: String) -> EnemyDefinition:
 	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	if enemies.has(enemy_id):
 		return enemies[enemy_id]
@@ -61,9 +61,17 @@ func get_enemy(enemy_name: String) -> EnemyDefinition:
 	enemies[enemy_id] = enemy
 	return enemy
 
-func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+static func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
 	return enemy_def.spells[randi_range(0, enemy_def.spells.size() - 1)]
 
-func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+static func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
 	var spell_def: SpellCasting.EnemySpell = get_random_spell(enemy_def)
 	return await spell_runtime.cast_spell(spell_def)
+
+static func effective_resonance(enemy: EnemyDefinition, embedding: Array) -> float:
+	return VectorMath.resonance(
+		embedding, 
+		enemy.descriptor, 
+		enemy.min_descriptor_resonance,
+		 enemy.max_descriptor_resonance
+	)

@@ -118,11 +118,6 @@ func _on_player_spell_cast(spell: SpellCasting.Spell) -> void:
 	_prepare_enemy_spell(current_enemy)
 	_refresh_fight_notes()
 
-func _get_effective_resonance(raw_resonance: float) -> float:
-	var min_resonance: float = current_enemy.min_descriptor_resonance
-	var max_resonance: float = current_enemy.max_descriptor_resonance
-	return lerpf(min_resonance, max_resonance, clampf(raw_resonance, 0.0, 1.0))
-
 func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemySpell:
 	prepared_enemy_spell = await enemy_library.cast_random_spell(enemy)
 	_log_line(

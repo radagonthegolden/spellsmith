@@ -3,8 +3,9 @@ class_name SpellCasting
 
 class Spell extends RefCounted:
 	var name: String = ""
-	var spell_embedding: Array = []
+	var embedding: Array = []
 	var actualized: Array = []
+	var resonance: float = 0.0
 
 class EnemySpell extends Spell:
 	var spell: Spell = null
@@ -14,21 +15,22 @@ signal spell_encoded(spell_name: String)
 signal initialization_finished(success: bool)
 
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
-@onready var ollama_client: OllamaClient = $OllamaClient
-@onready var aspect_library: AspectLibrary = $AspectLibrary
-@onready var usage_tracker: SpellUsageTracker = $SpellUsageTracker
 
 var loading := true
 var busy := false
 
-func cast_spell(spell: Variant) -> Spell:
-	if spell is EnemySpell:
-		spell.spell = await _text_to_spell(spell.spell.name)
-		return spell
-	return await _text_to_spell(spell.name)
+func cast_spell_on_enemy(spell: Spell, enemy: Enemies.EnemyDefinition) -> Spell:
+	var effective_resonance: float = Enemies.effective_resonance(enemy, spell.embedding)
+	return await cast_spell(spell, effective_resonance)
 
-func _text_to_spell(spell_name: String) -> Spell:
-	var returned: Variant = await aspect_library.text_to_actualized(spell_name, true)
+func cast_spell(spell: Variant, factor: float = 1.0) -> Spell:
+	if spell is EnemySpell:
+		spell.spell = await _text_to_spell(spell.spell.name, factor)
+		return spell
+	return await _text_to_spell(spell.name, factor)
+
+func _text_to_spell(spell_name: String, factor: float = 1.0) -> Spell:
+	var returned: Variant = await AspectLibrary.text_to_actualized(spell_name, true, factor)
 	var actualized: Array = returned["actualized"]
 	var embedding: Array = returned["embedding"]
 	return create_spell(spell_name, embedding, actualized)
@@ -68,11 +70,13 @@ func create_spell(
 	spell_name: String,
 	spell_embedding: Array = [],
 	actualized: Array = [],
+	resonance: float = 0.0
 ) -> Spell:
 	var out: Spell = Spell.new()
 	out.name = spell_name
-	out.spell_embedding = spell_embedding
+	out.embedding = spell_embedding
 	out.actualized = actualized
+	out.resonance = resonance
 	return out
 
 func create_enemy_spell(
@@ -81,7 +85,7 @@ func create_enemy_spell(
 ) -> EnemySpell:
 	var out: EnemySpell = EnemySpell.new()
 	out.name = spell.name
-	out.spell_embedding = spell.spell_embedding
+	out.embedding = spell.embedding
 	out.actualized = spell.actualized
 	out.spell = spell
 	out.damage = damage

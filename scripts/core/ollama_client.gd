@@ -19,7 +19,6 @@ var is_starting := false
 var is_ready := false
 var ollama_pid := -1
 
-
 func embed(input: Variant, context: String = "Embedding") -> Variant:
 	if input is String:
 		input = input.strip_edges()

@@ -33,6 +33,10 @@ static func weighted_average_embeddings(vectors: Array, weights: Array) -> Array
 		out[i] /= total_weight
 	return out
 
+static func resonance(embedding: Array, descriptor: Array, min_resonance: float, max_resonance: float) -> float:
+	var raw_resonance: float = _cosine_similarity(embedding, descriptor)
+	return lerpf(min_resonance, max_resonance, clampf(raw_resonance, 0.0, 1.0))
+
 # Private helper functions
 
 static func _mean(vectors: Dictionary) -> Array:

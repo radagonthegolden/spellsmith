@@ -5,8 +5,6 @@ var state_aspect_totals: Dictionary = {}
 var state_current_scores: Array = []
 var state_max_value: int = 6
 
-# State management methods (moved from CombatState script)
-
 func _state_setup(next_aspect_names: PackedStringArray, next_max_value: int) -> void:
 	state_aspect_names = next_aspect_names
 	state_max_value = next_max_value

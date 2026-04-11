@@ -23,27 +23,25 @@ const INTENSITY_HIGH_THRESHOLD: float = 0.90
 @export var length_penalty_min_factor: float = 0.5
 @export var softmax_temperature: float = 0.2
 
-@onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
-
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-func text_to_actualized(text: String, return_embedding: bool = false) -> Variant:
+static func text_to_actualized(text: String, return_embedding: bool = false, factor: float = 1.0) -> Variant:
 	assert(is_ready, "AspectLibrary is not initialized")
-	var embedding: Array = await ollama_client.embed(text, "Scoring text: " + text)
+	var embedding: Array = await OllamaClient.embed(text, "Scoring text: " + text)
 	var penalty_factor: float = _get_length_penalty_factor(text)
-
 	var scores := VectorMath.get_sorted_scores(embedding, DEFINITIONS)
+	var scaled_data := scores.map(func(number): return number * factor * penalty_factor) 
 	var out: Array = []
-	for raw_entry in scores:
+	for raw_entry in scaled_data:
 		var score_entry: Dictionary = raw_entry
 		out.append(
-			_make_actualized(score_entry["name"], score_entry["score"] * penalty_factor)
+			_make_actualized(score_entry["name"], score_entry["score"])
 		)
 
 	return {"actualized": out, "embedding": embedding} if return_embedding else out
 
-func initialize() -> bool:
+static func initialize() -> bool:
 	is_ready = false
 	DEFINITIONS = {}
 	assert(ollama_client != null, "AspectLibrary missing OllamaClient dependency")
@@ -69,7 +67,7 @@ static func scale_actualized(aspects: Array, factor: float) -> Array:
 		out.append(_make_actualized(actualized.name, actualized.score * factor))
 	return out
 
-func get_aspect_names() -> PackedStringArray:
+static func get_aspect_names() -> PackedStringArray:
 	var names: Array[String] = []
 	for definition in DEFINITIONS.values():
 		names.append(definition.name)
@@ -97,7 +95,7 @@ static func _make_actualized(aspect_name: String, aspect_score: float) -> Actual
 		out.intensity_label = "faint"
 	return out
 
-func _load_aspect_data(file_path: String) -> Dictionary:
+static func _load_aspect_data(file_path: String) -> Dictionary:
 	assert(FileAccess.file_exists(file_path), "Aspect file not found: " + file_path)
 
 	var file: FileAccess = FileAccess.open(file_path, FileAccess.READ)
@@ -112,7 +110,7 @@ func _load_aspect_data(file_path: String) -> Dictionary:
 
 	return json.data
 
-func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
+static func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
 	var embeddings: Array = await ollama_client.embed_many(phrases, "Aspect embedding: " + aspect_name)
 	assert(not embeddings.is_empty(), "Empty embeddings for aspect: " + aspect_name)
 
@@ -125,7 +123,7 @@ func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
 
 	return averaged
 
-func _get_length_penalty_factor(text: String) -> float:
+static func _get_length_penalty_factor(text: String) -> float:
 	var normalized: String = text.strip_edges()
 	if normalized.is_empty():
 		return 1.0
