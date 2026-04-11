@@ -143,3 +143,9 @@ func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embeddi
 	out.phrases = aspect_phrases
 	out.embedding = aspect_embedding
 	return out
+
+func format_actualized(aspects: Array) -> String:
+	var lines: Array = []
+	for entry in aspects:
+		lines.append("%s: %.2f (%s)" % [entry.name, entry.score, entry.intensity_label])
+	return "\n".join(lines)

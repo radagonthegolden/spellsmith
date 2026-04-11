@@ -34,15 +34,11 @@ func refresh_fight_notes(
 	active: bool,
 	spell_runtime: SpellCasting,
 	player: Battler,
-	prepared_enemy_spell: SpellCasting.Spell,
-	last_player_spell_name: String,
-	last_player_profile: Array,
-	last_player_resonance: float,
-	last_context_update: Dictionary,
-	current_scores: Array,
+    player_spell: SpellCasting.Spell,
+	enemy_spell: SpellCasting.Spell,
+    context: Dictionary,
+    context_update: Dictionary,
 	last_defense_summary: String,
-	progress_aspect_count: int,
-	aspect_names: PackedStringArray
 ) -> void:
 	if not active:
 		fight_notes.text = ""
@@ -51,32 +47,24 @@ func refresh_fight_notes(
 	fight_notes.clear()
 	fight_notes.append_text(
 		build_fight_notes(
-			spell_runtime,
-			player,
-			prepared_enemy_spell,
-			last_player_spell_name,
-			last_player_profile,
-			last_player_resonance,
-			last_context_update,
-			current_scores,
-			last_defense_summary,
-			progress_aspect_count,
-			aspect_names
+            spell_runtime,
+            player,
+			enemy_spell,
+            player_spell,
+            context,
+            context_update,
+            last_defense_summary,
 		)
 	)
 
 func build_fight_notes(
 	spell_runtime: SpellCasting,
 	player: Battler,
-	prepared_enemy_spell: SpellCasting.Spell,
-	last_player_spell_name: String,
-	last_player_profile: Array,
-	last_player_resonance: float,
-	last_context_update: Dictionary,
-	current_scores: Array,
+	enemy_spell: SpellCasting.Spell,
+	player_spell: SpellCasting.Spell,
+	context: Dictionary,
+	context_update: Dictionary,
 	last_defense_summary: String,
-	progress_aspect_count: int,
-	aspect_names: PackedStringArray
 ) -> String:
 	var lines: Array[String] = [
 		"[b]Fight Notes[/b]",
@@ -86,50 +74,36 @@ func build_fight_notes(
 		"",
 		"[b]Enemy Spell[/b]"
 	]
-	if prepared_enemy_spell == null:
+	if enemy_spell == null:
 		lines.append("None prepared.")
 	else:
-		assert(not prepared_enemy_spell.intensity_profile.is_empty(), "Prepared enemy spell is missing intensity_profile")
-		lines.append(prepared_enemy_spell.name)
-		lines.append("Pattern: " + spell_runtime.format_profile(prepared_enemy_spell.intensity_profile))
+		lines.append(enemy_spell.name)
+		lines.append("Pattern: " + spell_runtime.format_profile(enemy_spell.intensity_profile))
 
 	lines.append("")
 	lines.append("[b]Your Last Spell[/b]")
-	if last_player_spell_name.is_empty():
+	if player_spell.name.is_empty():
 		lines.append("None yet.")
 	else:
-		lines.append(last_player_spell_name)
-		var enemy_profile: Array = []
-		if prepared_enemy_spell != null:
-			assert(not prepared_enemy_spell.intensity_profile.is_empty(), "Prepared enemy spell is missing intensity_profile")
-			enemy_profile = prepared_enemy_spell.intensity_profile
-		lines.append("Pattern: " + spell_runtime.format_profile(spell_runtime.filter_display_profile(last_player_profile, enemy_profile)))
-		lines.append("Resonance: " + str(snappedf(last_player_resonance, 0.01)))
-		lines.append("Context Update: " + _format_context_update(last_context_update, aspect_names))
+		lines.append(player_spell.name)
+		lines.append("Pattern: " + spell_runtime.format_profile(
+            spell_runtime.filter_display_profile(
+                player_spell.actualized, enemy_spell.actualized
+            )
+        ))
+		lines.append("Resonance: " + str(snappedf(player_spell.resonance, 0.01)))
+		lines.append("Context Update: " + _format_cast(context_update))
 
 	lines.append("")
 	lines.append("[b]Context[/b]")
-	lines.append(_format_context_scores(current_scores, progress_aspect_count))
+	lines.append(_format_cast(context))
 	lines.append("")
 	lines.append("[b]Last Resolution[/b]")
 	lines.append(last_defense_summary)
 	return "\n".join(lines)
 
-func _format_context_scores(current_scores: Array, progress_aspect_count: int) -> String:
+func _format_cast(aspects: Dictionary) -> String:
 	var parts: Array = []
-	var limit: int = mini(progress_aspect_count, current_scores.size())
-	for i in range(limit):
-		var entry: AspectLibrary.ActualizedAspect = aspect_library.as_actualized(current_scores[i])
-		parts.append(entry.name + " " + str(int(entry.score)))
-	return ", ".join(parts)
-
-func _format_context_update(update: Dictionary, aspect_names: PackedStringArray) -> String:
-	var parts: Array = []
-	for aspect_name in aspect_names:
-		var delta: int = int(update.get(str(aspect_name), 0))
-		if delta <= 0:
-			continue
-		parts.append("%s +%d" % [str(aspect_name), delta])
-	if parts.is_empty():
-		return "No aspect gained pressure."
+	for aspect in aspects:
+		parts.append("%s: %d" % [aspect, aspects[aspect]])
 	return ", ".join(parts)

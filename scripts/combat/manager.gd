@@ -3,7 +3,6 @@ class_name CombatManager
 
 signal combat_finished(player_won: bool)
 
-@export var progress_aspect_count := 3
 @export var context_max_value := 6
 
 @onready var player: Battler = $PlayerBattler
@@ -17,19 +16,20 @@ signal combat_finished(player_won: bool)
 @onready var aspect_library: Aspects = $"../SpellCasting/AspectLibrary"
 
 const DICE_SIDES = 6
+const CONTEXT_MAX_VALUE: int = 6
 enum TurnResult { PLAYER_WON, ENEMY_WON, ONGOING }
 
 var active: bool = false
 var current_enemy: Enemies.EnemyDefinition = null
 var prepared_enemy_spell: SpellCasting.Spell = null
 var context_state := {}
-const CONTEXT_MAX_VALUE: int = 6
 
-var last_player_spell_name: String = ""
-var last_player_resonance: float = 0.0
-var last_player_profile: Array = []
-var last_context_update: Dictionary = {}
-var last_defense_summary: String = ""
+var turn_summary = {
+	"player_spell": null,
+	"enemy_spell": null,
+	"context_update": null,
+	"defense_summary": "",
+}
 
 func _ready() -> void:
 	ui.set_ui_visible(false)
@@ -83,11 +83,14 @@ func _on_player_spell_cast(spell_name: String) -> TurnResult:
 		]
 	)
 
-	context_state = _update_context(player_spell.actualized, context_state)
+	var returned := _update_context(player_spell.actualized, context_state)
+	context_state = returned["new_context"]
+	var context_update : Dictionary = returned["updates"]
+	var defense_summary: String = ""
 
-	if _meets_conditions(current_enemy.player_victory_conditions):
+	if _meets_conditions(current_enemy.player_victory_conditions): 
 		ui.set_turn_text("Turn: Victory")
-		last_defense_summary = "Your spell completed the victory condition before the enemy attack could land."
+		defense_summary = "Your spell completed the victory condition before the enemy attack could land."
 		_refresh_fight_notes()
 		ui.log_line("The context settles into a shape that breaks %s. Victory." % opponent.display_name)
 		_finish_battle(true)
@@ -107,17 +110,17 @@ func _on_player_spell_cast(spell_name: String) -> TurnResult:
 		if damage_to_apply > 0:
 			player_died = player.take_damage(damage_to_apply)
 			ui._update_health_ui()
-			last_defense_summary = "%s found no matching aspect and dealt %d damage." % [spell_name, damage_to_apply]
+			defense_summary = "%s found no matching aspect and dealt %d damage." % [spell_name, damage_to_apply]
 			ui.log_line("%s casts %s and hits for %d damage." % [opponent.display_name, spell_name, damage_to_apply])
 			if player_died:
 				ui.log_line("Your health is spent.")
 		else:
-			last_defense_summary = "%s had no matching aspect and fizzled." % spell_name
+			defense_summary = "%s had no matching aspect and fizzled." % spell_name
 			ui.log_line("%s casts %s but it fizzles with no matching aspects." % [opponent.display_name, spell_name])
 		ui.log_line("%s casts %s targeting %s — %dd vs %dd. Player rolled %d, enemy rolled %d." \
 		% [opponent.display_name, spell_name, prepared_enemy_spell.actualized[0].name, pd, ed, pr, er])
 	else:
-		last_defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." \
+		defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." \
 		% [prepared_enemy_spell.actualized[0].name, pr, er]
 		ui.log_line("Your spell nullifies %s." % spell_name)
 
@@ -138,6 +141,14 @@ func _on_player_spell_cast(spell_name: String) -> TurnResult:
 	ui.set_turn_text("Turn: Player")
 	_prepare_enemy_spell(current_enemy)
 	_refresh_fight_notes()
+
+	turn_summary = {
+		"player_spell": player_spell,
+		"enemy_spell": prepared_enemy_spell,
+		"context_update": context_update,
+		"defense_summary": defense_summary,
+	}
+
 	return TurnResult.ONGOING
 
 func _collide_spells(
@@ -187,13 +198,15 @@ func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemyS
 	return prepared_enemy_spell
 
 func _update_context(actualized: Array, context: Dictionary) -> Dictionary:
+	var updateds := {}
 	for aspect in actualized:
 		var next_value: int = _dampen_update(
 			context[aspect.name], 
 			actualized[aspect.name].intensity_rank
 		)
+		updateds[aspect.name] = next_value
 		context[aspect.name] += next_value
-	return context
+	return {"new_context": context, "updates": updateds}
 
 func _dampen_update(current_value: int, update_value: int) -> int:
 	var dampening: int = 0
@@ -212,14 +225,6 @@ func _finish_battle(player_won: bool) -> void:
 	ui.set_ui_visible(false)
 	combat_finished.emit(player_won)
 
-func _reset_round_state(defense_summary: String = "") -> void:
-	prepared_enemy_spell = null
-	last_player_spell_name = ""
-	last_player_resonance = 0.0
-	last_player_profile = []
-	last_context_update = {}
-	last_defense_summary = defense_summary
-
 func _roll_dice(dice_count: int) -> int:
 	var total: int = 0
 	for _i in range(dice_count):
@@ -228,14 +233,10 @@ func _roll_dice(dice_count: int) -> int:
 
 func _refresh_fight_notes() -> void:
 	ui.refresh_fight_notes(
-		active,
 		spell_runtime,
 		player,
-		prepared_enemy_spell,
-		last_player_spell_name,
-		last_player_profile,
-		last_player_resonance,
-		last_context_update,
-		last_defense_summary,
-		progress_aspect_count,
+		turn_summary["player_spell"],
+		turn_summary["enemy_spell"],
+		turn_summary["context_update"],
+		turn_summary["defense_summary"],
 	)
