@@ -19,6 +19,46 @@ var is_starting := false
 var is_ready := false
 var ollama_pid := -1
 
+
+func embed(input: Variant, context: String = "Embedding") -> Variant:
+	if input is String:
+		input = input.strip_edges()
+	else:
+		for input_line in input:	
+			input_line = str(input_line).strip_edges()
+	
+	var ok := await ensure_started()
+	assert(ok, "Ollama not available")
+
+	var http := HTTPRequest.new()
+	add_child(http)
+
+	var err := http.request(
+		ollama_url,
+		["Content-Type: application/json"],
+		HTTPClient.METHOD_POST,
+		JSON.stringify({"model": ollama_model, "input": input})
+	)
+	if err != OK:
+		http.queue_free()
+	assert(err == OK, "Ollama request failed to start")
+
+	var response = await http.request_completed
+	http.queue_free()
+
+	assert(response[0] == HTTPRequest.RESULT_SUCCESS, "Ollama transport error")
+	assert(response[1] == 200, "Ollama HTTP error: " + str(response[1]))
+
+	var json := JSON.new()
+	assert(json.parse(response[3].get_string_from_utf8()) == OK, "Failed to parse Ollama JSON response")
+
+	var embeddings: Array = json.data.embeddings
+	assert(not embeddings.is_empty(), context + " produced no embeddings")
+
+	if input is String:
+		return embeddings[0]
+	return embeddings
+
 func _ready() -> void:
 	await ensure_started()
 
@@ -49,43 +89,6 @@ func ensure_started() -> bool:
 	is_starting = false
 	startup_finished.emit(ok)
 	return ok
-
-func embed(input_data: Variant) -> Array:
-	var ok := await ensure_started()
-	assert(ok, "Ollama not available")
-
-	var http := HTTPRequest.new()
-	add_child(http)
-
-	var err := http.request(
-		ollama_url,
-		["Content-Type: application/json"],
-		HTTPClient.METHOD_POST,
-		JSON.stringify({"model": ollama_model, "input": input_data})
-	)
-	if err != OK:
-		http.queue_free()
-	assert(err == OK, "Ollama request failed to start")
-
-	var response = await http.request_completed
-	http.queue_free()
-
-	assert(response[0] == HTTPRequest.RESULT_SUCCESS, "Ollama transport error")
-	assert(response[1] == 200, "Ollama HTTP error: " + str(response[1]))
-
-	var json := JSON.new()
-	assert(json.parse(response[3].get_string_from_utf8()) == OK, "Failed to parse Ollama JSON response")
-
-	return json.data.get("embeddings", [])
-
-func embed_many(input_data: Variant, context: String = "Embedding") -> Array:
-	var embeddings: Array = await embed(input_data)
-	assert(not embeddings.is_empty(), context + " produced no embeddings")
-	return embeddings
-
-func embed_one(input_data: Variant, context: String = "Embedding") -> Array:
-	var embeddings: Array = await embed_many(input_data, context)
-	return embeddings[0]
 
 func _check_server_up() -> bool:
 	var http := HTTPRequest.new()

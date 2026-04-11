@@ -16,45 +16,8 @@ class EnemyDefinition extends RefCounted:
 
 var enemies: Dictionary = {}
 
-func _ready() -> void:
-	assert(ollama_client != null, "Enemies missing OllamaClient dependency")
-	assert(spell_runtime != null, "Enemies missing SpellCasting dependency")
-
-func _enemy_id_from_input(enemy_id_or_name: String) -> String:
-	var trimmed: String = enemy_id_or_name.strip_edges()
-	assert(not trimmed.is_empty(), "Enemy id or name cannot be empty")
-	return trimmed.to_snake_case().to_lower()
-
-func enemy_from_dictionary(source: Dictionary) -> EnemyDefinition:
-	assert(source["spells"] is Array, "Enemy spells must be an Array: %s" % str(source["name"]))
-	assert(not (source["spells"] as Array).is_empty(), "Enemy has no spells: %s" % str(source["name"]))
-
-	var out: EnemyDefinition = EnemyDefinition.new()
-	out.name = str(source["name"])
-	out.descriptor_sentences = source["descriptor_sentences"]
-	out.min_descriptor_resonance = float(source.get("min_descriptor_resonance", 0.0))
-	out.max_descriptor_resonance = float(source.get("max_descriptor_resonance", 1.0))
-	out.player_victory_conditions = source.get("player_victory_conditions", [])
-	out.player_loss_conditions = source.get("player_loss_conditions", [])
-
-	assert(not out.descriptor_sentences.is_empty(), "Enemy descriptor_sentences cannot be empty: %s" % out.name)
-	var descriptions: Array = out.descriptor_sentences
-	var embeddings: Array = await ollama_client.embed_many(descriptions, "Enemy descriptor")
-	out.descriptor = VectorMath.average_embeddings(embeddings)
-
-	var parsed_spells: Array = []
-	for spell_dict in source["spells"]:
-		var spell_name: String = str(spell_dict["name"]).strip_edges()
-		var damage: int = int(spell_dict["damage"])
-		var built_spell: SpellCasting.Spell = await spell_runtime.build_spell_from_text(spell_name, damage, false)
-
-		parsed_spells.append(built_spell)
-	out.spells = parsed_spells
-
-	return out
-
-func load_enemy(enemy_id_or_name: String) -> EnemyDefinition:
-	var enemy_id: String = _enemy_id_from_input(enemy_id_or_name)
+func load_enemy(enemy_name: String) -> EnemyDefinition:
+	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	var file: FileAccess = FileAccess.open("res://data/enemies.json", FileAccess.READ)
 	assert(file != null, "Failed to open enemy file")
 	var content: String = file.get_as_text()
@@ -65,27 +28,42 @@ func load_enemy(enemy_id_or_name: String) -> EnemyDefinition:
 	assert(typeof(json.data) == TYPE_DICTIONARY, "Enemy file must contain a JSON object keyed by enemy id")
 	assert(json.data.has(enemy_id), "Enemy not found in file: %s" % enemy_id)
 
-	return await enemy_from_dictionary(json.data[enemy_id])
+	var source : Dictionary = json.data[enemy_id]
 
-func get_enemy(enemy_id_or_name: String) -> EnemyDefinition:
-	var enemy_id: String = _enemy_id_from_input(enemy_id_or_name)
+	var out: EnemyDefinition = EnemyDefinition.new()
+	out.name = str(source["name"])
+	out.descriptor_sentences = source["descriptor_sentences"]
+	out.min_descriptor_resonance = float(source.get("min_descriptor_resonance", 0.0))
+	out.max_descriptor_resonance = float(source.get("max_descriptor_resonance", 1.0))
+	out.player_victory_conditions = source.get("player_victory_conditions", [])
+	out.player_loss_conditions = source.get("player_loss_conditions", [])
+
+	var descriptions: Array = out.descriptor_sentences
+	var embeddings: Array = await ollama_client.embed(descriptions, "Enemy descriptor")
+	out.descriptor = VectorMath.average_embeddings(embeddings)
+
+	var parsed_spells: Array = []
+	for spell_dict in source["spells"]:
+		var spell = spell_runtime.create_enemy_spell(
+			int(spell_dict["damage"]),
+			spell_runtime.create_spell(str(spell_dict["name"]), [], [])
+		)
+		parsed_spells.append(spell)
+	out.spells = parsed_spells
+
+	return out
+
+func get_enemy(enemy_name: String) -> EnemyDefinition:
+	var enemy_id: String = enemy_name.strip_edges().to_snake_case().to_lower()
 	if enemies.has(enemy_id):
 		return enemies[enemy_id]
-	var enemy: EnemyDefinition = await load_enemy(enemy_id)
+	var enemy: EnemyDefinition = await load_enemy(enemy_name)
 	enemies[enemy_id] = enemy
 	return enemy
 
-func prepare_spell(enemy_def: EnemyDefinition, spell_index: int) -> SpellCasting.Spell:
-	assert(enemy_def != null, "Enemy definition is null")
-	assert(spell_index >= 0 and spell_index < enemy_def.spells.size(), "Invalid spell index: %d" % spell_index)
+func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+	return enemy_def.spells[randi_range(0, enemy_def.spells.size() - 1)]
 
-	var source_spell: SpellCasting.Spell = enemy_def.spells[spell_index]
-	var round_spell: SpellCasting.Spell = spell_runtime.create_spell(
-		source_spell.name,
-		source_spell.damage,
-		source_spell.spell_embedding,
-		source_spell.aspect_scores,
-		false
-	)
-
-	return round_spell
+func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.Spell:
+	var spell_def: SpellCasting.EnemySpell = get_random_spell(enemy_def)
+	return await spell_runtime.cast_spell(spell_def)

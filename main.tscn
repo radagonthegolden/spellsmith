@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dek33f36dr6qo" path="res://scripts/core/ollama_client.gd" id="2_h2yge"]
 [ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://scripts/core/aspects.gd" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://bwfs8fxn8l1qw" path="res://scripts/combat/battler.gd" id="4_2wk8u"]
-[ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat/combat_manager.gd" id="5_m3h8a"]
+[ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat/manager.gd" id="5_m3h8a"]
 [ext_resource type="PackedScene" path="res://scenes/battler_ui.tscn" id="6_2k3sj"]
 [ext_resource type="Script" uid="uid://cy5pr0sk0uh4t" path="res://scripts/core/spell_usage_tracker.gd" id="7_0dnga"]
 [ext_resource type="Script" uid="uid://dcj38xoyv0hwi" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
