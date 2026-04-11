@@ -23,7 +23,6 @@ func _state_apply_spell(effective_scores: Array) -> Dictionary:
 	var delta_by_aspect: Dictionary = {}
 	for aspect_name in state_aspect_names:
 		var name_text: String = str(aspect_name)
-		assert(state_aspect_totals.has(name_text), "Missing aspect total for: " + name_text)
 		var current_value: int = int(state_aspect_totals[name_text])
 		var update_value: int = aspect_library.score_to_intensity_rank(_state_score_for_aspect(effective_scores, name_text))
 		var next_value: int = _state_update_value(current_value, update_value)

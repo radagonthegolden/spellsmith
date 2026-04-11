@@ -12,7 +12,7 @@
 [ext_resource type="Script" uid="uid://day80d1n03b65" path="res://scripts/combat/enemies.gd" id="10_e5n1y"]
 [ext_resource type="Script" uid="uid://b2hp83akoia3q" path="res://scripts/core/vector_math.gd" id="11_w8ajc"]
 [ext_resource type="Script" uid="uid://bxsunhtdtofro" path="res://scripts/combat/collision_engine.gd" id="12_ghm9x"]
-[ext_resource type="Script" uid="uid://cujsesxvkboar" path="res://scripts/combat/fight_notes_renderer.gd" id="13_3kr90"]
+[ext_resource type="Script" uid="uid://cujsesxvkboar" path="res://scripts/combat/ui.gd" id="13_3kr90"]
 [ext_resource type="Script" uid="uid://cnhlit0mlgekt" path="res://scripts/combat/state.gd" id="14_8yq0k"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_page_shadow"]
@@ -228,7 +228,7 @@ script = ExtResource("5_m3h8a")
 [node name="CollisionEngine" type="Node" parent="CombatManager" unique_id=196438274]
 script = ExtResource("12_ghm9x")
 
-[node name="FightNotesRenderer" type="Node" parent="CombatManager" unique_id=1734028183]
+[node name="UI" type="Node" parent="CombatManager" unique_id=1734028183]
 script = ExtResource("13_3kr90")
 
 [node name="State" type="Node" parent="CombatManager" unique_id=188104233]
