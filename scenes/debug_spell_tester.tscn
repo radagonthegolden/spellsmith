@@ -1,8 +1,64 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cas0p8pofel2b"]
 
-[ext_resource type="Script" path="res://scripts/debug/debug_spell_tester.gd" id="1_debug"]
+[ext_resource type="Script" uid="uid://cau77voh3akmc" path="res://scripts/debug/debug_spell_tester.gd" id="1_debug"]
+[ext_resource type="PackedScene" uid="uid://c1uk678gti5di" path="res://scenes/spell_casting.tscn" id="2_nqy6y"]
 
-[node name="DebugSpellTester" type="Control"]
+[node name="DebugSpellTester" type="Control" unique_id=505614009]
+layout_mode = 3
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_debug")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=434326170]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer" unique_id=750762495]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="MarginContainer/VBox" unique_id=62816495]
+layout_mode = 2
+text = "Spell Aspect Debugger"
+
+[node name="Status" type="Label" parent="MarginContainer/VBox" unique_id=1365174474]
+layout_mode = 2
+text = "Initializing..."
+
+[node name="InputRow" type="HBoxContainer" parent="MarginContainer/VBox" unique_id=154149187]
+layout_mode = 2
+
+[node name="Input" type="LineEdit" parent="MarginContainer/VBox/InputRow" unique_id=1689701685]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Type a spell phrase and press Enter or Test..."
+editable = false
+
+[node name="TestButton" type="Button" parent="MarginContainer/VBox/InputRow" unique_id=285922846]
+layout_mode = 2
+disabled = true
+text = "Test"
+
+[node name="BatchButton" type="Button" parent="MarginContainer/VBox/InputRow" unique_id=399670257]
+layout_mode = 2
+disabled = true
+text = "Reload Batch"
+
+[node name="Output" type="RichTextLabel" parent="MarginContainer/VBox" unique_id=751209792]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+
+[node name="SpellCasting" parent="." unique_id=2062949297 instance=ExtResource("2_nqy6y")]
+
+[connection signal="startup_finished" from="SpellCasting" to="." method="_on_spell_casting_startup_finished"]

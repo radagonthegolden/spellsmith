@@ -19,7 +19,7 @@ var is_starting := false
 var is_ready := false
 var ollama_pid := -1
 
-func embed(input: Variant, context: String = "Embedding") -> Variant:
+func embed(input: Variant, context: String = "Embedding") -> Array:
 	if input is String:
 		input = input.strip_edges()
 	else:
@@ -118,4 +118,3 @@ func _wait_until_server_up(timeout_seconds: float) -> bool:
 		elapsed += startup_poll_interval_seconds
 
 	return false
-

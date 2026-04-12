@@ -1,6 +1,8 @@
 extends Node
 class_name Aspects
 
+signal startup_finished(success: bool)
+
 class AspectDefinition extends RefCounted:
 	var name: String = ""
 	var phrases: Array = []
@@ -24,51 +26,24 @@ const INTENSITY_HIGH_THRESHOLD: float = 0.90
 @export var length_penalty_min_factor: float = 0.5
 @export var softmax_temperature: float = 0.2
 
-@onready var ollama_client: OllamaClient = get_node_or_null(ollama_client_path)
-@onready var vector_math: VectorMath = get_node_or_null(vector_math_path)
+@onready var ollama_client: OllamaClient = $"../OllamaClient"
+@onready var vector_math: VectorMath = $"../VectorMath"
 
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-func text_to_actualized(text: String, return_embedding: bool = false, factor: float = 1.0) -> Variant:
-	assert(is_ready, "AspectLibrary is not initialized")
-	var embedding: Array = await ollama_client.embed(text, "Scoring text: " + text)
-	var penalty_factor: float = _get_length_penalty_factor(text)
+func embedding_to_actualized(embedding: Array, factor: float = 1.0) -> Array:
 	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
-	var scaled_data := scores.map(func(number): return number * factor * penalty_factor) 
+	var scaled_data := scores.map(func(entry): return {
+		"name": entry["name"],
+		"score": entry["score"] * factor 
+	})
 	var out: Array = []
 	for raw_entry in scaled_data:
 		var score_entry: Dictionary = raw_entry
 		out.append(
 			_make_actualized(score_entry["name"], score_entry["score"])
 		)
-
-	return {"actualized": out, "embedding": embedding} if return_embedding else out
-
-func initialize() -> bool:
-	is_ready = false
-	DEFINITIONS = {}
-	assert(ollama_client != null, "AspectLibrary missing OllamaClient dependency")
-
-	var raw_aspect_data: Dictionary = _load_aspect_data(aspects_file_path)
-	assert(not raw_aspect_data.is_empty(), "Empty aspect desc file")
-
-	for aspect_name_variant in raw_aspect_data.keys():
-		var aspect_name: String = str(aspect_name_variant)
-		var phrases: Array = raw_aspect_data[aspect_name]
-		var aspect_embedding: Array = await _embed_aspect(aspect_name, phrases)
-		assert(not aspect_embedding.is_empty(), "Aspect embedding cannot be empty for aspect: " + aspect_name)
-		DEFINITIONS[aspect_name] = _make_definition(aspect_name, phrases, aspect_embedding)
-
-	is_ready = true
-	
-	return true
-
-func scale_actualized(aspects: Array, factor: float) -> Array:
-	var out: Array = []
-	for entry in aspects:
-		var actualized: ActualizedAspect = _make_actualized(str(entry["name"]), float(entry["score"]))
-		out.append(_make_actualized(actualized.name, actualized.score * factor))
 	return out
 
 func get_aspect_names() -> PackedStringArray:
@@ -115,19 +90,19 @@ func _load_aspect_data(file_path: String) -> Dictionary:
 	return json.data
 
 func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
-	var embeddings: Array = await ollama_client.embed_many(phrases, "Aspect embedding: " + aspect_name)
+	var embeddings: Array = await ollama_client.embed(phrases, "Aspect embedding: " + aspect_name)
 	assert(not embeddings.is_empty(), "Empty embeddings for aspect: " + aspect_name)
 
 	var weights: Array = []
 	for phrase in phrases:
-		weights.append(_get_length_penalty_factor(str(phrase)))
+		weights.append(get_length_penalty_factor(str(phrase)))
 
 	var averaged: Array = vector_math.weighted_average_embeddings(embeddings, weights)
 	assert(not averaged.is_empty(), "Invalid averaged embedding for aspect: " + aspect_name)
 
 	return averaged
 
-func _get_length_penalty_factor(text: String) -> float:
+func get_length_penalty_factor(text: String) -> float:
 	var normalized: String = text.strip_edges()
 	if normalized.is_empty():
 		return 1.0
@@ -149,3 +124,21 @@ func format_actualized(aspects: Array) -> String:
 	for entry in aspects:
 		lines.append("%s: %.2f (%s)" % [entry.name, entry.score, entry.intensity_label])
 	return "\n".join(lines)
+
+func _on_ollama_client_startup_finished(ok: bool) -> void:
+	assert(ok, "OllamaClient failed to start, which is required for AspectLibrary")
+	is_ready = false
+	DEFINITIONS = {}
+
+	var raw_aspect_data: Dictionary = _load_aspect_data(aspects_file_path)
+	assert(not raw_aspect_data.is_empty(), "Empty aspect desc file")
+
+	for aspect_name_variant in raw_aspect_data.keys():
+		var aspect_name: String = str(aspect_name_variant)
+		var phrases: Array = raw_aspect_data[aspect_name]
+		var aspect_embedding: Array = await _embed_aspect(aspect_name, phrases)
+		assert(not aspect_embedding.is_empty(), "Aspect embedding cannot be empty for aspect: " + aspect_name)
+		DEFINITIONS[aspect_name] = _make_definition(aspect_name, phrases, aspect_embedding)
+
+	is_ready = true
+	startup_finished.emit(true)

@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://c1uk678gti5di"]
+
+[ext_resource type="Script" uid="uid://d286ajegmohgi" path="res://scripts/core/spell_casting.gd" id="1_62w2o"]
+[ext_resource type="Script" uid="uid://dek33f36dr6qo" path="res://scripts/core/ollama_client.gd" id="2_vf25j"]
+[ext_resource type="Script" uid="uid://dm36io6fvtc45" path="res://scripts/core/aspects.gd" id="3_q32n0"]
+[ext_resource type="Script" uid="uid://b2hp83akoia3q" path="res://scripts/core/vector_math.gd" id="4_gf7ta"]
+[ext_resource type="Script" uid="uid://cy5pr0sk0uh4t" path="res://scripts/core/spell_usage_tracker.gd" id="5_lp57t"]
+
+[node name="SpellCasting" type="Node" unique_id=2062949297]
+script = ExtResource("1_62w2o")
+
+[node name="OllamaClient" type="Node" parent="." unique_id=999047298]
+script = ExtResource("2_vf25j")
+
+[node name="AspectLibrary" type="Node" parent="." unique_id=31478466]
+script = ExtResource("3_q32n0")
+
+[node name="VectorMath" type="Node" parent="." unique_id=1136558251]
+script = ExtResource("4_gf7ta")
+
+[node name="SpellUsageTracker" type="Node" parent="." unique_id=1060334061]
+script = ExtResource("5_lp57t")
+
+[connection signal="startup_finished" from="OllamaClient" to="AspectLibrary" method="_on_ollama_client_startup_finished"]
+[connection signal="startup_finished" from="AspectLibrary" to="." method="_on_aspect_library_startup_finished"]

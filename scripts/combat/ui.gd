@@ -1,13 +1,15 @@
 extends Node
 class_name CombatUI
 
+
+# Node references
 @onready var player_ui: BattlerUI = $"../../HiddenUi/CombatHUD/PlayerCard"
 @onready var opponent_ui: BattlerUI = $"../../HiddenUi/CombatHUD/EnemyCard"
 @onready var turn_label: Label = $"../../HiddenUi/TurnRow/TurnLabel"
-@onready var battle_log = $"../../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
+@onready var battle_log: RichTextLabel = $"../../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
 @onready var fight_notes_frame: PanelContainer = $"../../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/FightNotesFrame"
 @onready var fight_notes: RichTextLabel = $"../../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/FightNotesFrame/FightNotesMargin/FightNotes"
-@onready var aspect_library: AspectLibrary = $"../../SpellCasting/AspectLibrary"
+@onready var aspect_library: Aspects = $"../../SpellCasting/AspectLibrary"
 
 func set_names(player_name: String, opponent_name: String) -> void:
 	player_ui.set_name_text(player_name)

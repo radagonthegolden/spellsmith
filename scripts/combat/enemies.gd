@@ -3,7 +3,7 @@ class_name Enemies
 
 @onready var ollama_client: OllamaClient = $"../../SpellCasting/OllamaClient"
 @onready var spell_runtime: SpellCasting = $"../../SpellCasting"
-@onready var vector_math: VectorMath = $"../../SpellCasting/VectorMath"
+@onready var vector_math = $"../../SpellCasting/VectorMath"
 
 class EnemyDefinition extends RefCounted:
 	var name: String = ""

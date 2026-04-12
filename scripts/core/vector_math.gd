@@ -1,21 +1,21 @@
-extends RefCounted
+extends Node
 class_name VectorMath
 
-static func get_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
+func get_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
 	var target_vectors: Dictionary = {}
 	for key in target_definitions:
 		target_vectors[key] = target_definitions[key].embedding
 	return _centered_scores(source_embedding, target_vectors)
 
-static func get_sorted_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
+func get_sorted_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
 	var scores: Array = get_scores(source_embedding, target_definitions)
 	scores.sort_custom(func(a, b): return a["score"] > b["score"])
 	return scores
 
-static func average_embeddings(vectors: Array) -> Array:
+func average_embeddings(vectors: Array) -> Array:
 	return weighted_average_embeddings(vectors, vectors.map(func(_entry): return 1.0))
 
-static func weighted_average_embeddings(vectors: Array, weights: Array) -> Array:
+func weighted_average_embeddings(vectors: Array, weights: Array) -> Array:
 	var dim: int = vectors[0].size()
 	var out: Array = []
 	out.resize(dim)
@@ -33,13 +33,13 @@ static func weighted_average_embeddings(vectors: Array, weights: Array) -> Array
 		out[i] /= total_weight
 	return out
 
-static func resonance(embedding: Array, descriptor: Array, min_resonance: float, max_resonance: float) -> float:
+func resonance(embedding: Array, descriptor: Array, min_resonance: float, max_resonance: float) -> float:
 	var raw_resonance: float = _cosine_similarity(embedding, descriptor)
 	return lerpf(min_resonance, max_resonance, clampf(raw_resonance, 0.0, 1.0))
 
 # Private helper functions
 
-static func _mean(vectors: Dictionary) -> Array:
+func _mean(vectors: Dictionary) -> Array:
 	var first_vec: Array = vectors.values()[0]
 	var dim: int = first_vec.size()
 	var mean: Array = []
@@ -56,7 +56,7 @@ static func _mean(vectors: Dictionary) -> Array:
 		mean[i] /= float(count)
 	return mean
 
-static func _centered_scores(source_embedding: Array, target_vectors: Dictionary) -> Array:
+func _centered_scores(source_embedding: Array, target_vectors: Dictionary) -> Array:
 	var target_mean: Array = _mean(target_vectors)
 	var centered_source: Array = _subtract(source_embedding, target_mean)
 	var scores := []
@@ -65,14 +65,14 @@ static func _centered_scores(source_embedding: Array, target_vectors: Dictionary
 		scores.append({"name": target_name, "score": _cosine_similarity(centered_source, centered_target)})
 	return scores
 
-static func _subtract(a: Array, b: Array) -> Array:
+func _subtract(a: Array, b: Array) -> Array:
 	var out: Array = []
 	out.resize(a.size())
 	for i in range(a.size()):
 		out[i] = float(a[i]) - float(b[i])
 	return out
 
-static func _cosine_similarity(a: Array, b: Array) -> float:
+func _cosine_similarity(a: Array, b: Array) -> float:
 	var dot: float = 0.0
 	var norm_a: float = 0.0
 	var norm_b: float = 0.0
@@ -88,7 +88,7 @@ static func _cosine_similarity(a: Array, b: Array) -> float:
 		return 0.0
 	return dot / (sqrt(norm_a) * sqrt(norm_b))
 
-static func _softmax(scores: Dictionary, temperature: float = 1.0) -> Dictionary:
+func _softmax(scores: Dictionary, temperature: float = 1.0) -> Dictionary:
 	var temp := maxf(temperature, 0.001)
 	var max_score := -INF
 

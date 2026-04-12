@@ -3,28 +3,29 @@ class_name CombatManager
 
 signal combat_finished(player_won: bool)
 
-@export var context_max_value := 6
 
+# Node references
 @onready var player: Battler = $PlayerBattler
 @onready var opponent: Battler = $OpponentBattler
-
 @onready var ui: CombatUI = $UI
+
+# Dependency references
 @onready var spell_runtime: SpellCasting = $"../SpellCasting"
 @onready var enemy_library: Enemies = $Enemies
 @onready var vector_math: VectorMath = $"../SpellCasting/VectorMath"
-@onready var collision_engine: CollisionEngine = $CollisionEngine
 @onready var aspect_library: Aspects = $"../SpellCasting/AspectLibrary"
 
-const DICE_SIDES = 6
+const DICE_SIDES: int = 6
 const CONTEXT_MAX_VALUE: int = 6
 enum TurnResult { PLAYER_WON, ENEMY_WON, ONGOING }
+
 
 var active: bool = false
 var current_enemy: Enemies.EnemyDefinition = null
 var prepared_enemy_spell: SpellCasting.Spell = null
-var context_state := {}
+var context_state: Dictionary = {}
 
-var turn_summary = {
+var turn_summary: Dictionary = {
 	"player_spell": null,
 	"enemy_spell": null,
 	"context_update": null,
@@ -40,7 +41,7 @@ func start_battle(enemy_id: String = "pedantic_admitter") -> void:
 
 	active = true
 	current_enemy = enemy
-	_reset_round_state("The duel has just begun.")
+	ui.log_line("The duel has just begun.")
 
 	player.reset_health()
 	opponent.reset_health()
@@ -163,7 +164,14 @@ func _collide_spells(
 		"enemy_roll": 0,
 	}
 
-	var player_aspect : Aspects.ActualizedAspect = player_profile[enemy_aspect.name]
+	var primary_aspect : int = -1
+	for i in range(player_profile.size()):
+		var aspect_data: Aspects.ActualizedAspect = aspect_library.as_actualized(player_profile[i])
+		if aspect_data.name == enemy_aspect.name:
+			primary_aspect = i
+			break
+	var player_aspect : Aspects.ActualizedAspect = player_profile[primary_aspect]
+
 	var player_dice: int = player_aspect.intensity_rank
 	var enemy_dice: int = enemy_aspect.intensity_rank
 
@@ -233,10 +241,12 @@ func _roll_dice(dice_count: int) -> int:
 
 func _refresh_fight_notes() -> void:
 	ui.refresh_fight_notes(
+		active,
 		spell_runtime,
 		player,
 		turn_summary["player_spell"],
 		turn_summary["enemy_spell"],
+		context_state,
 		turn_summary["context_update"],
 		turn_summary["defense_summary"],
 	)
