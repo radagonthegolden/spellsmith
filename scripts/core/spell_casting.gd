@@ -29,7 +29,7 @@ func cast_spell_on_enemy(spell_name: String, enemy: Enemies.EnemyDefinition) -> 
 	var spell_embedding: Array = await ollama_client.embed(spell_name, "Spell casting: " + spell_name)
 	var resonance: float = enemies_runtime.effective_resonance(enemy, spell_embedding)
 	var penalty_factor: float = aspect_library.get_length_penalty_factor(spell_name)
-	var profile := aspect_library.embedding_to_profile(spell_embedding, penalty_factor * resonance)
+	var profile := aspect_library.embedding_to_profile(spell_embedding, penalty_factor * resonance, true)
 	return create_spell(spell_name, spell_embedding, profile, resonance)
 
 func cast_spell(input: Variant, resonance: float = 1.0) -> Variant:

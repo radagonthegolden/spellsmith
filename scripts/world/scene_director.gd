@@ -26,7 +26,6 @@ func _ready() -> void:
 		assert(startup_ok, "Spell initialization failed before combat start")
 
 	manuscript.clear_and_reset()
-	manuscript.append_animated("The duel begins...\n")
 	spell_input.grab_focus()
 	await combat_manager.start_battle(combat_enemy_id)
 

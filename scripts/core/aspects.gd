@@ -21,6 +21,8 @@ const INTENSITY_LOW_THRESHOLD: float = 0.15
 const INTENSITY_MEDIUM_THRESHOLD: float = 0.30
 const INTENSITY_HIGH_THRESHOLD: float = 0.45
 
+const DICE_SIDES: int = 6
+
 @export var aspects_file_path: String = "res://data/aspects.json"
 @export var ollama_client_path: NodePath = "../OllamaClient"
 @export var vector_math_path: NodePath = "../VectorMath"
@@ -35,8 +37,11 @@ const INTENSITY_HIGH_THRESHOLD: float = 0.45
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-func embedding_to_profile(embedding: Array, factor: float = 1.0) -> ActualizedProfile:
+func embedding_to_profile(embedding: Array, factor: float = 1.0, keep_top: bool = false) -> ActualizedProfile:
 	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
+
+	scores = [scores[0]] if keep_top else scores
+
 	var scaled_data := scores.map(func(entry): return {
 		"name": entry["name"],
 		"score": entry["score"] * factor 
@@ -58,6 +63,25 @@ func profile_to_string(profile: ActualizedProfile) -> String:
 	var parts: Array = []
 	for entry in profile.profile:
 		parts.append(entry.name + " " + str(entry.intensity_rank) + "d")
+	return ", ".join(parts)
+
+func profile_to_rolls(profile: ActualizedProfile) -> Dictionary:
+	var out := {}
+	for entry in profile.profile:
+		out[entry.name] = {"results": [], "total": 0}
+		for i in range(entry.intensity_rank):
+			out[entry.name]["results"].append(_roll_dice())
+		out[entry.name]["total"] = out[entry.name]["results"]\
+			.reduce(func(accum, number): return accum + number, 0)
+	return out
+
+func rolls_to_string(rolls: Dictionary) -> String:
+	var parts: Array = []
+	for aspect_name in rolls.keys():
+		var single_aspect_rolls : Array = rolls[aspect_name]["results"]
+		parts.append(
+			aspect_name + ": " + str(single_aspect_rolls.size()) + "d -> " + "+".join(single_aspect_rolls)
+		)
 	return ", ".join(parts)
 
 func _make_actualized(aspect_name: String, aspect_score: float) -> ActualizedAspect:
@@ -149,3 +173,9 @@ func _on_ollama_client_startup_finished(ok: bool) -> void:
 
 	is_ready = true
 	startup_finished.emit(true)
+
+func _roll_dice(dice_count: int = 1) -> int:
+	var total := 0
+	for _i in range(dice_count):
+		total += randi_range(1, DICE_SIDES)
+	return total
