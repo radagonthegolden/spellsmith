@@ -3,34 +3,24 @@ class_name CombatManager
 
 signal combat_finished(player_won: bool)
 
-
-# Node references
 @onready var player: Battler = $PlayerBattler
 @onready var opponent: Battler = $OpponentBattler
 @onready var ui: CombatUI = $UI
 
-# Dependency references
-@onready var spell_runtime: SpellCasting = $"../SpellCasting"
+@onready var spell_casting: SpellCasting = $"../SpellCasting"
 @onready var enemy_library: Enemies = $Enemies
-@onready var vector_math: VectorMath = $"../SpellCasting/VectorMath"
 @onready var aspect_library: Aspects = $"../SpellCasting/AspectLibrary"
 
 const DICE_SIDES: int = 6
 const CONTEXT_MAX_VALUE: int = 6
 enum TurnResult { PLAYER_WON, ENEMY_WON, ONGOING }
 
-
-var active: bool = false
+var active := false
 var current_enemy: Enemies.EnemyDefinition = null
-var prepared_enemy_spell: SpellCasting.Spell = null
+var prepared_enemy_spell: SpellCasting.EnemySpell = null
 var context_state: Dictionary = {}
 
-var turn_summary: Dictionary = {
-	"player_spell": null,
-	"enemy_spell": null,
-	"context_update": null,
-	"defense_summary": "",
-}
+var combat_notes: CombatUI.CombatNotes = CombatUI.CombatNotes.new()
 
 func _ready() -> void:
 	ui.set_ui_visible(false)
@@ -41,149 +31,138 @@ func start_battle(enemy_id: String = "pedantic_admitter") -> void:
 
 	active = true
 	current_enemy = enemy
-	ui.log_line("The duel has just begun.")
+	prepared_enemy_spell = null
+	context_state.clear()
 
-	player.reset_health()
-	opponent.reset_health()
 	player.display_name = "You"
 	opponent.display_name = enemy.name
-	
+
 	for aspect_name in aspect_library.get_aspect_names():
 		context_state[aspect_name] = 0
 
-	ui.set_names(player.display_name, opponent.display_name)
-	ui._update_health_ui()
-
-	ui.set_turn_text("Turn: Player")
 	ui.set_ui_visible(true)
 
+	ui.log_line("The duel has just begun.")
 	ui.log_line("")
 	ui.log_line("A hostile presence condenses into the manuscript.")
 
 	prepared_enemy_spell = await _prepare_enemy_spell(enemy)
-	_refresh_fight_notes()
+	print(prepared_enemy_spell.profile.profile)
 
-func _on_player_spell_cast(spell_name: String) -> TurnResult:
-	ui.set_turn_text("Turn: Player")
+	combat_notes = CombatUI.CombatNotes.new()
 
-	var player_spell: SpellCasting.Spell = await spell_runtime.cast_spell_on_enemy(
+	combat_notes.enemy_name = enemy.name
+	combat_notes.enemy_spell = prepared_enemy_spell
+	combat_notes.context = context_state.duplicate()
+	combat_notes.player_health = player.health
+	combat_notes.player_max_health = player.max_health
+
+	ui.refresh_combat_notes(combat_notes)
+
+func submit_spell(spell_name: String) -> TurnResult:
+	if not active:
+		return TurnResult.ONGOING
+
+	var player_spell: SpellCasting.Spell = await spell_casting.cast_spell_on_enemy(
 		spell_name,
 		current_enemy
 	)
 
-	var displayed_player_profile: Array = spell_runtime.filter_display_profile(
-		player_spell.actualized,
-		prepared_enemy_spell.actualized
-	)
+	var context_update: Dictionary = _update_context(player_spell.profile)
+	var turn_summary: String = ""
 
 	ui.log_line(
 		"You cast \"%s\". Resonance %s. Pattern: %s." % [
 			spell_name,
 			str(snappedf(player_spell.resonance, 0.01)),
-			spell_runtime.format_profile(displayed_player_profile)
+			spell_casting.aspect_library.profile_to_string(player_spell.profile)
 		]
 	)
 
-	var returned := _update_context(player_spell.actualized, context_state)
-	context_state = returned["new_context"]
-	var context_update : Dictionary = returned["updates"]
-	var defense_summary: String = ""
-
-	if _meets_conditions(current_enemy.player_victory_conditions): 
-		ui.set_turn_text("Turn: Victory")
-		defense_summary = "Your spell completed the victory condition before the enemy attack could land."
-		_refresh_fight_notes()
+	if _meets_conditions(current_enemy.player_victory_conditions):
+		combat_notes.turn_summary = "Your spell completed the victory condition before the enemy attack could land."
+		ui.refresh_combat_notes(combat_notes)
 		ui.log_line("The context settles into a shape that breaks %s. Victory." % opponent.display_name)
 		_finish_battle(true)
 		return TurnResult.PLAYER_WON
 
-	var collision_result := _collide_spells(
-		prepared_enemy_spell.actualized[0], 
-		prepared_enemy_spell.actualized
-	)
-	var pd := int(collision_result["player_dice"])
-	var pr := int(collision_result["player_roll"])
-	var ed := int(collision_result["enemy_dice"])
-	var er := int(collision_result["enemy_roll"])
+	var enemy_aspect: Aspects.ActualizedAspect = prepared_enemy_spell.spell.profile.profile[0]
+	var collision_result := _collide_spells(enemy_aspect, player_spell.profile)
+	var player_roll := int(collision_result["player_roll"])
+	var enemy_roll := int(collision_result["enemy_roll"])
 	var player_died := false
-	if collision_result["player_roll"] < collision_result["enemy_roll"]:
-		var damage_to_apply : int = prepared_enemy_spell.damage
-		if damage_to_apply > 0:
-			player_died = player.take_damage(damage_to_apply)
-			ui._update_health_ui()
-			defense_summary = "%s found no matching aspect and dealt %d damage." % [spell_name, damage_to_apply]
-			ui.log_line("%s casts %s and hits for %d damage." % [opponent.display_name, spell_name, damage_to_apply])
-			if player_died:
-				ui.log_line("Your health is spent.")
-		else:
-			defense_summary = "%s had no matching aspect and fizzled." % spell_name
-			ui.log_line("%s casts %s but it fizzles with no matching aspects." % [opponent.display_name, spell_name])
-		ui.log_line("%s casts %s targeting %s — %dd vs %dd. Player rolled %d, enemy rolled %d." \
-		% [opponent.display_name, spell_name, prepared_enemy_spell.actualized[0].name, pd, ed, pr, er])
-	else:
-		defense_summary = "Your %s roll (%d) beat the enemy roll (%d) and nullified the attack." \
-		% [prepared_enemy_spell.actualized[0].name, pr, er]
-		ui.log_line("Your spell nullifies %s." % spell_name)
 
-	_refresh_fight_notes()
+	if player_roll < enemy_roll:
+		var damage_to_apply := prepared_enemy_spell.damage
+
+		player_died = player.take_damage(damage_to_apply)
+		turn_summary = "%s broke through for %d damage." % [prepared_enemy_spell.name, damage_to_apply]
+		ui.log_line("%s casts %s and hits for %d damage." % [
+			opponent.display_name,
+			prepared_enemy_spell.name,
+			damage_to_apply
+		])
+		if player_died:
+			ui.log_line("Your health is spent.")
+
+		ui.log_line("%s casts %s targeting %s - %dd vs %dd. Player rolled %d, enemy rolled %d." % [
+			opponent.display_name,
+			prepared_enemy_spell.name,
+			enemy_aspect.name,
+			int(collision_result["player_dice"]),
+			int(collision_result["enemy_dice"]),
+			player_roll,
+			enemy_roll
+		])
+	else:
+		turn_summary = "Your %s roll (%d) matched or beat the enemy roll (%d) and nullified the attack." % [
+			enemy_aspect.name,
+			player_roll,
+			enemy_roll
+		]
+		ui.log_line("Your spell nullifies %s." % prepared_enemy_spell.name)
+
+	combat_notes.player_spell = player_spell
+	combat_notes.enemy_spell = prepared_enemy_spell
+	combat_notes.context_update = context_update
+	combat_notes.turn_summary = turn_summary
+	combat_notes.player_health = player.health
+
+	ui.refresh_combat_notes(combat_notes)
 
 	if player_died:
-		ui.set_turn_text("Turn: Defeat")
 		ui.log_line("Your body gives out before the context yields. Defeat.")
 		_finish_battle(false)
 		return TurnResult.ENEMY_WON
 
 	if _meets_conditions(current_enemy.player_loss_conditions):
-		ui.set_turn_text("Turn: Defeat")
 		ui.log_line("%s draws the context into its own design. Defeat." % opponent.display_name)
 		_finish_battle(false)
 		return TurnResult.ENEMY_WON
 
-	ui.set_turn_text("Turn: Player")
-	_prepare_enemy_spell(current_enemy)
-	_refresh_fight_notes()
-
-	turn_summary = {
-		"player_spell": player_spell,
-		"enemy_spell": prepared_enemy_spell,
-		"context_update": context_update,
-		"defense_summary": defense_summary,
-	}
-
+	prepared_enemy_spell = await _prepare_enemy_spell(current_enemy)
+	combat_notes.enemy_spell = prepared_enemy_spell
+	ui.refresh_combat_notes(combat_notes)
 	return TurnResult.ONGOING
 
 func _collide_spells(
-	enemy_aspect: Aspects.ActualizedAspect,
-	player_profile: Array
+	enemy_aspect: Aspects.ActualizedAspect, 
+	player_profile: Aspects.ActualizedProfile
 	) -> Dictionary:
-
-	var result: Dictionary = {
-		"player_dice": 0,
-		"player_roll": 0,
-		"enemy_dice": 0,
-		"enemy_roll": 0,
-	}
-
-	var primary_aspect : int = -1
-	for i in range(player_profile.size()):
-		var aspect_data: Aspects.ActualizedAspect = aspect_library.as_actualized(player_profile[i])
+	var player_dice := 0
+	for aspect in player_profile.profile:
+		var aspect_data: Aspects.ActualizedAspect = aspect
 		if aspect_data.name == enemy_aspect.name:
-			primary_aspect = i
+			player_dice = aspect_data.intensity_rank
 			break
-	var player_aspect : Aspects.ActualizedAspect = player_profile[primary_aspect]
 
-	var player_dice: int = player_aspect.intensity_rank
 	var enemy_dice: int = enemy_aspect.intensity_rank
-
-	var player_roll: int = _roll_dice(player_dice)
-	var enemy_roll: int = _roll_dice(enemy_dice)
-
-	result["player_dice"] = player_dice
-	result["player_roll"] = player_roll
-	result["enemy_dice"] = enemy_dice
-	result["enemy_roll"] = enemy_roll
-
-	return result
+	return {
+		"player_dice": player_dice,
+		"player_roll": _roll_dice(player_dice),
+		"enemy_dice": enemy_dice,
+		"enemy_roll": _roll_dice(enemy_dice),
+	}
 
 func _meets_conditions(conditions: Array) -> bool:
 	for condition in conditions:
@@ -192,61 +171,44 @@ func _meets_conditions(conditions: Array) -> bool:
 	return false
 
 func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemySpell:
-	prepared_enemy_spell = await enemy_library.cast_random_spell(enemy)
-
+	var next_enemy_spell := await enemy_library.cast_random_spell(enemy)
 	ui.log_line(
 		"%s casts %s. Pattern: %s. Damage: %d." % [
 			opponent.display_name,
-			prepared_enemy_spell.name,
-			spell_runtime.format_profile(prepared_enemy_spell.actualized),
-			prepared_enemy_spell.damage
+			next_enemy_spell.spell.name,
+			spell_casting.aspect_library.profile_to_string(next_enemy_spell.spell.profile),
+			next_enemy_spell.damage
 		]
 	)
+	return next_enemy_spell
 
-	return prepared_enemy_spell
-
-func _update_context(actualized: Array, context: Dictionary) -> Dictionary:
-	var updateds := {}
-	for aspect in actualized:
-		var next_value: int = _dampen_update(
-			context[aspect.name], 
-			actualized[aspect.name].intensity_rank
-		)
-		updateds[aspect.name] = next_value
-		context[aspect.name] += next_value
-	return {"new_context": context, "updates": updateds}
+func _update_context(profile: Aspects.ActualizedProfile) -> Dictionary:
+	var updates := {}
+	for aspect in profile.profile:
+		var current_value: int = int(context_state.get(aspect.name, 0))
+		var next_value: int = _dampen_update(current_value, aspect.intensity_rank)
+		updates[aspect.name] = next_value
+		context_state[aspect.name] = clampi(current_value + next_value, 0, CONTEXT_MAX_VALUE)
+	return updates
 
 func _dampen_update(current_value: int, update_value: int) -> int:
-	var dampening: int = 0
-	if current_value == 0:
-		dampening = 0
-	elif current_value <= 1:
+	var dampening := 0
+	if current_value <= 1 and current_value > 0:
 		dampening = -1
-	elif current_value <= 3:
+	elif current_value <= 3 and current_value > 1:
 		dampening = -2
-	return clampi(current_value + update_value + dampening, 0, CONTEXT_MAX_VALUE)
+	return clampi(update_value + dampening, 0, CONTEXT_MAX_VALUE - current_value)
 
 func _finish_battle(player_won: bool) -> void:
 	active = false
 	current_enemy = null
+	prepared_enemy_spell = null
 	ui.clear_fight_notes()
 	ui.set_ui_visible(false)
 	combat_finished.emit(player_won)
 
 func _roll_dice(dice_count: int) -> int:
-	var total: int = 0
+	var total := 0
 	for _i in range(dice_count):
 		total += randi_range(1, DICE_SIDES)
 	return total
-
-func _refresh_fight_notes() -> void:
-	ui.refresh_fight_notes(
-		active,
-		spell_runtime,
-		player,
-		turn_summary["player_spell"],
-		turn_summary["enemy_spell"],
-		context_state,
-		turn_summary["context_update"],
-		turn_summary["defense_summary"],
-	)

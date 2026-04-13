@@ -3,8 +3,6 @@ class_name SceneDirector
 
 @export var combat_enemy_id: String = "pedantic_admitter"
 
-const DEFAULT_PROMPT: String = "Write the next line..."
-
 @onready var spell_input: LineEdit = $"../OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit"
 @onready var manuscript = $"../OuterMargin/ShadowPanel/Panel/Content/PageMargin/PageColumns/LoreFrame/LoreMargin/LoreText"
 
@@ -20,32 +18,30 @@ func _ready() -> void:
 	assert(ollama_client != null, "SceneDirector missing OllamaClient")
 
 	combat_manager.combat_finished.connect(_on_combat_finished)
-	await ollama_client.ensure_started()
-	var initialization_success: bool = true
-	if spell_runtime.loading:
-		initialization_success = await spell_runtime.initialization_finished
-	assert(initialization_success, "Spell initialization failed before combat start")
-	assert(not spell_runtime.loading, "Spell is still loading before combat start")
+
+	var startup_ok: bool = await ollama_client.ensure_started()
+	assert(startup_ok, "Ollama failed to start before combat start")
+	if not spell_runtime.aspect_library.is_ready:
+		startup_ok = await spell_runtime.startup_finished
+		assert(startup_ok, "Spell initialization failed before combat start")
+
 	manuscript.clear_and_reset()
 	manuscript.append_animated("The duel begins...\n")
 	spell_input.grab_focus()
 	await combat_manager.start_battle(combat_enemy_id)
 
-func _on_player_submitted(text = null) -> void:
+func _on_player_submitted(text: Variant = null) -> void:
 	var submitted_text: String = _extract_text(text)
-	if submitted_text.is_empty():
+	if submitted_text.is_empty() or not combat_manager.active:
 		return
 
-	# Combat is always active at startup
-	if combat_manager.active:
-		await spell_runtime._on_spell_cast(submitted_text)
+	spell_input.clear()
+	await combat_manager.submit_spell(submitted_text)
 
 func _on_combat_finished(_player_won: bool) -> void:
-	# Combat finished - can add post-battle logic here
 	pass
 
 func _extract_text(text: Variant) -> String:
 	if text == null:
 		text = spell_input.text
-
 	return str(text).strip_edges()

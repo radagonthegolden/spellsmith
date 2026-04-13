@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bwfs8fxn8l1qw" path="res://scripts/combat/battler.gd" id="4_2wk8u"]
 [ext_resource type="Script" uid="uid://bl0tddpgvelda" path="res://scripts/combat/manager.gd" id="5_m3h8a"]
-[ext_resource type="PackedScene" path="res://scenes/battler_ui.tscn" id="6_2k3sj"]
 [ext_resource type="PackedScene" uid="uid://c1uk678gti5di" path="res://scenes/spell_casting.tscn" id="8_5vw27"]
 [ext_resource type="Script" uid="uid://dcj38xoyv0hwi" path="res://scripts/world/scene_director.gd" id="8_l2gf2"]
 [ext_resource type="Script" uid="uid://erumvj3nvat2" path="res://scripts/ui/manuscript_writer.gd" id="9_mw1a3"]
@@ -48,9 +47,6 @@ corner_radius_top_left = 12
 corner_radius_top_right = 12
 corner_radius_bottom_right = 12
 corner_radius_bottom_left = 12
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hidden"]
-bg_color = Color(0, 0, 0, 0)
 
 [node name="main" type="Control" unique_id=835171175]
 layout_mode = 3
@@ -177,45 +173,6 @@ placeholder_text = "Write the next line..."
 keep_editing_on_text_submit = true
 clear_button_enabled = true
 
-[node name="HiddenUi" type="Control" parent="." unique_id=1134265121]
-visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="TurnRow" type="HBoxContainer" parent="HiddenUi" unique_id=1716524441]
-layout_mode = 0
-
-[node name="TurnLabel" type="Label" parent="HiddenUi/TurnRow" unique_id=189333007]
-layout_mode = 2
-text = "Turn: Player"
-
-[node name="CombatHUD" type="HBoxContainer" parent="HiddenUi" unique_id=1817702334]
-layout_mode = 0
-
-[node name="PlayerCard" parent="HiddenUi/CombatHUD" unique_id=1796960431 instance=ExtResource("6_2k3sj")]
-layout_mode = 2
-
-[node name="EnemyCard" parent="HiddenUi/CombatHUD" unique_id=1478877382 instance=ExtResource("6_2k3sj")]
-layout_mode = 2
-
-[node name="Button" type="Button" parent="HiddenUi" unique_id=111194602]
-layout_mode = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
-theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
-text = "Write"
-
-[node name="PurgeUsageButton" type="Button" parent="HiddenUi" unique_id=852592323]
-layout_mode = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_hidden")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_hidden")
-theme_override_styles/hover = SubResource("StyleBoxFlat_hidden")
-text = "Purge Ink"
-
 [node name="CombatManager" type="Node" parent="." unique_id=1916645604]
 script = ExtResource("5_m3h8a")
 
@@ -239,4 +196,3 @@ script = ExtResource("8_l2gf2")
 [node name="SpellCasting" parent="." unique_id=2062949297 instance=ExtResource("8_5vw27")]
 
 [connection signal="text_submitted" from="OuterMargin/ShadowPanel/Panel/Content/InputRow/InputMargin/LineEdit" to="SceneDirector" method="_on_player_submitted"]
-[connection signal="pressed" from="HiddenUi/Button" to="SceneDirector" method="_on_player_submitted"]

@@ -14,9 +14,12 @@ class ActualizedAspect extends RefCounted:
 	var intensity_rank: int = 0
 	var intensity_label: String = "faint"
 
-const INTENSITY_LOW_THRESHOLD: float = 0.30
-const INTENSITY_MEDIUM_THRESHOLD: float = 0.60
-const INTENSITY_HIGH_THRESHOLD: float = 0.90
+class ActualizedProfile extends RefCounted:
+	var profile = []
+
+const INTENSITY_LOW_THRESHOLD: float = 0.15
+const INTENSITY_MEDIUM_THRESHOLD: float = 0.30
+const INTENSITY_HIGH_THRESHOLD: float = 0.45
 
 @export var aspects_file_path: String = "res://data/aspects.json"
 @export var ollama_client_path: NodePath = "../OllamaClient"
@@ -32,25 +35,30 @@ const INTENSITY_HIGH_THRESHOLD: float = 0.90
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-func embedding_to_actualized(embedding: Array, factor: float = 1.0) -> Array:
+func embedding_to_profile(embedding: Array, factor: float = 1.0) -> ActualizedProfile:
 	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
 	var scaled_data := scores.map(func(entry): return {
 		"name": entry["name"],
 		"score": entry["score"] * factor 
 	})
-	var out: Array = []
-	for raw_entry in scaled_data:
-		var score_entry: Dictionary = raw_entry
-		out.append(
-			_make_actualized(score_entry["name"], score_entry["score"])
-		)
-	return out
+	var profile: Array = []
+	for entry in scaled_data:
+		var actualized := _make_actualized(entry["name"], entry["score"])
+		if actualized.intensity_rank > 0:
+			profile.append(actualized)
+	return _make_profile(profile)
 
 func get_aspect_names() -> PackedStringArray:
 	var names := []
 	for definition in DEFINITIONS.values():
 		names.append(definition.name)
 	return names
+
+func profile_to_string(profile: ActualizedProfile) -> String:
+	var parts: Array = []
+	for entry in profile.profile:
+		parts.append(entry.name + " " + str(entry.intensity_rank) + "d")
+	return ", ".join(parts)
 
 func _make_actualized(aspect_name: String, aspect_score: float) -> ActualizedAspect:
 	var out: ActualizedAspect = ActualizedAspect.new()
@@ -119,11 +127,10 @@ func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embeddi
 	out.embedding = aspect_embedding
 	return out
 
-func format_actualized(aspects: Array) -> String:
-	var lines: Array = []
-	for entry in aspects:
-		lines.append("%s: %.2f (%s)" % [entry.name, entry.score, entry.intensity_label])
-	return "\n".join(lines)
+func _make_profile(profile: Array) -> ActualizedProfile:
+	var actualized_profile = ActualizedProfile.new()
+	actualized_profile.profile = profile
+	return actualized_profile
 
 func _on_ollama_client_startup_finished(ok: bool) -> void:
 	assert(ok, "OllamaClient failed to start, which is required for AspectLibrary")
