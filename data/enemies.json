@@ -3,31 +3,31 @@
     "name": "Pedantic Admitter",
     "spells": [
       {
-        "name": "Invocation of the Rightful Name",
-        "damage": 2
-      },
-      {
-        "name": "Whispered Veils of Ceremonial Secrecy",
+        "name": "adressing the proper speech",
         "damage": 3
       },
       {
-        "name": "The Channel of Ritual Transmission",
+        "name": "respect of true silence",
         "damage": 2
       },
       {
-        "name": "Figured Shape of the Basin\u0027s Boundary",
-        "damage": 4
-      },
-      {
-        "name": "Semantic Drift of the Threshold",
+        "name": "outlining the definition",
         "damage": 2
       },
       {
-        "name": "Echoing Return of the Ancient Rites",
-        "damage": 2
+        "name": "official communication",
+        "damage": 1
       },
       {
-        "name": "Erosion Into the Forgotten Void",
+        "name": "reshaping the argument",
+        "damage": 1
+      },
+      {
+        "name": "reminisence of the ancient rites",
+        "damage": 1
+      },
+      {
+        "name": "dismising void",
         "damage": 1
       }
     ],

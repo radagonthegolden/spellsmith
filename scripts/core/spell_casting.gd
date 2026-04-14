@@ -4,11 +4,11 @@ class_name SpellCasting
 class Spell extends RefCounted:
 	var name: String = ""
 	var embedding: Array = []
-	var profile: Aspects.ActualizedProfile = Aspects.ActualizedProfile.new()
+	var profile: Array = []
+	var actualized: Array = []
 	var resonance: float = 0.0
 
 class EnemySpell extends Spell:
-	var spell: Spell = null
 	var damage: int = -1
 
 signal spell_encoded(spell_name: String)
@@ -41,24 +41,26 @@ func cast_spell_from_name(spell_name: String, resonance: float = 1.0) -> Variant
 	var spell_embedding := await ollama_client.embed(spell_name, "Spell casting: " + spell_name)
 	var penalty_factor := aspect_library.get_length_penalty_factor(spell_name)
 	var profile := aspect_library.embedding_to_profile(spell_embedding, penalty_factor * resonance)
-	return create_spell(spell_name, spell_embedding, profile, resonance)
+	var actualized: Array = aspect_library.get_raw_scores(spell_embedding)
+	var spell := create_spell(spell_name, spell_embedding, profile, resonance)
+	spell.actualized = actualized
+	return spell
 
 func cast_spell_from_prepard(spell: Variant, resonance: float = 1.0) -> Variant:
 	if spell is EnemySpell:
-		spell.spell = await cast_spell_from_name(spell.spell.name, resonance)
-		return spell
+		return create_enemy_spell(spell.damage, await cast_spell_from_name(spell.name, resonance))
 	return await cast_spell_from_name(spell.name, resonance)
 
 func create_spell(
 	spell_name: String,
 	spell_embedding: Array = [],
-	profile: Aspects.ActualizedProfile = null,
+	profile: Array = [],
 	resonance: float = 0.0
 ) -> Spell:
 	var out: Spell = Spell.new()
 	out.name = spell_name
 	out.embedding = spell_embedding
-	out.profile = profile if profile != null else Aspects.ActualizedProfile.new()
+	out.profile = profile
 	out.resonance = resonance
 	return out
 
@@ -69,8 +71,7 @@ func create_enemy_spell(
 	var out: EnemySpell = EnemySpell.new()
 	out.name = spell.name
 	out.embedding = spell.embedding
-	out.profile = spell.profile
-	out.spell = spell
+	out.profile = [spell.profile[0]] if spell.profile.size() > 0 else []
 	out.damage = damage
 	return out
 

@@ -46,15 +46,12 @@ func start_battle(enemy_id: String = "pedantic_admitter") -> void:
 	ui.log_line("A hostile presence condenses into the manuscript.")
 
 	prepared_enemy_spell = await _prepare_enemy_spell(enemy)
-	print(prepared_enemy_spell.profile.profile)
 
 	combat_notes = CombatUI.CombatNotes.new()
 
 	combat_notes.enemy_name = enemy.name
 	combat_notes.enemy_spell = prepared_enemy_spell
-	combat_notes.context = context_state.duplicate()
-	combat_notes.player_health = player.health
-	combat_notes.player_max_health = player.max_health
+	_sync_combat_notes()
 
 	ui.refresh_combat_notes(combat_notes)
 
@@ -72,7 +69,7 @@ func submit_spell(spell_name: String) -> TurnResult:
 	)
 
 	var enemy_rolls = spell_casting.aspect_library.profile_to_rolls(
-		prepared_enemy_spell.spell.profile
+		prepared_enemy_spell.profile
 	)
 
 	ui.log_line(
@@ -92,6 +89,12 @@ func submit_spell(spell_name: String) -> TurnResult:
 
 	var context_update: Dictionary = _update_context(player_spell.profile)
 	var turn_summary: String = ""
+	var enemy_aspect: String = prepared_enemy_spell.profile[0].name
+
+	combat_notes.player_spell = player_spell
+	combat_notes.enemy_spell = prepared_enemy_spell
+	combat_notes.context_update = context_update
+	_sync_combat_notes()
 
 	if _meets_conditions(current_enemy.player_victory_conditions):
 		combat_notes.turn_summary = "The context begins to shift ..."
@@ -100,21 +103,18 @@ func submit_spell(spell_name: String) -> TurnResult:
 		_finish_battle(true)
 		return TurnResult.PLAYER_WON
 
-
-	var enemy_aspect = enemy_rolls.keys()[0]
-
 	var player_died := false
 	if player_rolls[enemy_aspect]["total"] < enemy_rolls[enemy_aspect]["total"]:
 		player_died = player.take_damage(prepared_enemy_spell.damage)
-		ui.log_line("%s brakes through for %d damage." % \
-			[prepared_enemy_spell.spell.name, prepared_enemy_spell.damage])
-		turn_summary = "Enemy broke throught"
+		ui.log_line("%s breaks through for %d damage." % \
+			[prepared_enemy_spell.name, prepared_enemy_spell.damage])
+		turn_summary = "Enemy broke through"
 		if player_died:
 			ui.log_line("Your health is spent.")
 	else:
 		ui.log_line("Your %s nullifies %s (rolled %s over %s in %s" % [
 			player_spell.name,
-			prepared_enemy_spell.spell.name,
+			prepared_enemy_spell.name,
 			player_rolls[enemy_aspect]["total"],
 			enemy_rolls[enemy_aspect]["total"],
 			enemy_aspect
@@ -123,12 +123,8 @@ func submit_spell(spell_name: String) -> TurnResult:
 
 	ui.log_line("")
 
-	combat_notes.player_spell = player_spell
-	combat_notes.enemy_spell = prepared_enemy_spell
-	combat_notes.context_update = context_update
 	combat_notes.turn_summary = turn_summary
-	combat_notes.player_health = player.health
-
+	_sync_combat_notes()
 	ui.refresh_combat_notes(combat_notes)
 
 	if player_died:
@@ -143,6 +139,7 @@ func submit_spell(spell_name: String) -> TurnResult:
 
 	prepared_enemy_spell = await _prepare_enemy_spell(current_enemy)
 	combat_notes.enemy_spell = prepared_enemy_spell
+	_sync_combat_notes()
 	ui.refresh_combat_notes(combat_notes)
 	return TurnResult.ONGOING
 
@@ -157,16 +154,16 @@ func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemyS
 	ui.log_line(
 		"%s prepares to cast %s. Pattern: %s. Damage: %d." % [
 			opponent.display_name,
-			next_enemy_spell.spell.name,
-			spell_casting.aspect_library.profile_to_string(next_enemy_spell.spell.profile),
+			next_enemy_spell.name,
+			spell_casting.aspect_library.profile_to_string(next_enemy_spell.profile),
 			next_enemy_spell.damage
 		]
 	)
 	return next_enemy_spell
 
-func _update_context(profile: Aspects.ActualizedProfile) -> Dictionary:
+func _update_context(profile: Array) -> Dictionary:
 	var updates := {}
-	for aspect in profile.profile:
+	for aspect in profile:
 		var current_value: int = int(context_state.get(aspect.name, 0))
 		var next_value: int = _dampen_update(current_value, aspect.intensity_rank)
 		updates[aspect.name] = next_value
@@ -188,3 +185,8 @@ func _finish_battle(player_won: bool) -> void:
 	ui.clear_fight_notes()
 	ui.set_ui_visible(false)
 	combat_finished.emit(player_won)
+
+func _sync_combat_notes() -> void:
+	combat_notes.context = context_state.duplicate()
+	combat_notes.player_health = player.health
+	combat_notes.player_max_health = player.max_health

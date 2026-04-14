@@ -14,21 +14,18 @@ class ActualizedAspect extends RefCounted:
 	var intensity_rank: int = 0
 	var intensity_label: String = "faint"
 
-class ActualizedProfile extends RefCounted:
-	var profile = []
-
-const INTENSITY_LOW_THRESHOLD: float = 0.15
-const INTENSITY_MEDIUM_THRESHOLD: float = 0.30
-const INTENSITY_HIGH_THRESHOLD: float = 0.45
+const INTENSITY_LOW_THRESHOLD: float = 0.10
+const INTENSITY_MEDIUM_THRESHOLD: float = 0.25
+const INTENSITY_HIGH_THRESHOLD: float = 0.35
 
 const DICE_SIDES: int = 6
 
 @export var aspects_file_path: String = "res://data/aspects.json"
-@export var ollama_client_path: NodePath = "../OllamaClient"
-@export var vector_math_path: NodePath = "../VectorMath"
-@export var length_penalty_reference_words: float = 4.0
-@export var length_penalty_sqrt_scale: float = 1.0
-@export var length_penalty_min_factor: float = 0.5
+
+@export var DEFAULT_PENALTY_LENGTH: int = 4
+@export var DEFAULT_PENALTY_FACTOR: float = 0.7
+@export var DEFAULT_PENALTY_FLOOR: float = 0.5
+
 @export var softmax_temperature: float = 0.2
 
 @onready var ollama_client: OllamaClient = $"../OllamaClient"
@@ -37,21 +34,24 @@ const DICE_SIDES: int = 6
 var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
-func embedding_to_profile(embedding: Array, factor: float = 1.0, keep_top: bool = false) -> ActualizedProfile:
+func embedding_to_profile(embedding: Array, factor: float = 1.0, keep_top: bool = false) -> Array:
 	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
 
 	scores = [scores[0]] if keep_top else scores
 
 	var scaled_data := scores.map(func(entry): return {
 		"name": entry["name"],
-		"score": entry["score"] * factor 
+		"score": entry["score"] * factor
 	})
 	var profile: Array = []
 	for entry in scaled_data:
 		var actualized := _make_actualized(entry["name"], entry["score"])
 		if actualized.intensity_rank > 0:
 			profile.append(actualized)
-	return _make_profile(profile)
+	return profile
+
+func get_raw_scores(embedding: Array) -> Array:
+	return vector_math.get_sorted_scores(embedding, DEFINITIONS)
 
 func get_aspect_names() -> PackedStringArray:
 	var names := []
@@ -59,28 +59,41 @@ func get_aspect_names() -> PackedStringArray:
 		names.append(definition.name)
 	return names
 
-func profile_to_string(profile: ActualizedProfile) -> String:
+func profile_to_string(profile: Array) -> String:
 	var parts: Array = []
-	for entry in profile.profile:
+	for entry in profile:
 		parts.append(entry.name + " " + str(entry.intensity_rank) + "d")
 	return ", ".join(parts)
 
-func profile_to_rolls(profile: ActualizedProfile) -> Dictionary:
+func profile_to_rolls(profile: Array) -> Dictionary:
 	var out := {}
-	for entry in profile.profile:
-		out[entry.name] = {"results": [], "total": 0}
-		for i in range(entry.intensity_rank):
-			out[entry.name]["results"].append(_roll_dice())
-		out[entry.name]["total"] = out[entry.name]["results"]\
-			.reduce(func(accum, number): return accum + number, 0)
+	for definition in DEFINITIONS.values():
+		out[definition.name] = {"results": [], "total": 0}
+
+	for aspect in profile:
+		var results: Array = []
+		for _i in range(aspect.intensity_rank):
+			results.append(_roll_dice())
+		out[aspect.name] = {
+			"results": results,
+			"total": results.reduce(func(accum, number): return accum + number, 0)
+		}
+
+	for aspect_name in out.keys():
+		if out[aspect_name]["total"] == 0:
+			out.erase(aspect_name)
+
 	return out
 
 func rolls_to_string(rolls: Dictionary) -> String:
 	var parts: Array = []
-	for aspect_name in rolls.keys():
-		var single_aspect_rolls : Array = rolls[aspect_name]["results"]
+	for aspect_name in rolls.keys().filter(func(name): return rolls[name]["results"].size() > 0):
 		parts.append(
-			aspect_name + ": " + str(single_aspect_rolls.size()) + "d -> " + "+".join(single_aspect_rolls)
+			"%s: %dd -> %s" % [
+				aspect_name,
+				rolls[aspect_name]["results"].size(),
+				"+".join(rolls[aspect_name]["results"].map(func(num): return str(num)))
+			]
 		)
 	return ", ".join(parts)
 
@@ -127,7 +140,8 @@ func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
 
 	var weights: Array = []
 	for phrase in phrases:
-		weights.append(get_length_penalty_factor(str(phrase)))
+		#weights.append(get_length_penalty_factor(str(phrase)))
+		weights.append(1.0)
 
 	var averaged: Array = vector_math.weighted_average_embeddings(embeddings, weights)
 	assert(not averaged.is_empty(), "Invalid averaged embedding for aspect: " + aspect_name)
@@ -139,10 +153,16 @@ func get_length_penalty_factor(text: String) -> float:
 	if normalized.is_empty():
 		return 1.0
 
-	var word_count: int = normalized.split(" ", false).size()
-	var adjusted_word_count: float = maxf(1.0, float(word_count) / length_penalty_reference_words)
-	var penalty: float = length_penalty_sqrt_scale / sqrt(adjusted_word_count)
-	return clampf(penalty, length_penalty_min_factor, 1.0)
+	var length := normalized.split(" ").size()
+
+	if length <= DEFAULT_PENALTY_LENGTH:
+		return 1.0
+
+	var penalization_factor := 1.0
+	for i in range(length - DEFAULT_PENALTY_LENGTH):
+		penalization_factor *= DEFAULT_PENALTY_FACTOR
+
+	return max(penalization_factor, DEFAULT_PENALTY_FLOOR)
 
 func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embedding: Array) -> AspectDefinition:
 	var out: AspectDefinition = AspectDefinition.new()
@@ -150,11 +170,6 @@ func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embeddi
 	out.phrases = aspect_phrases
 	out.embedding = aspect_embedding
 	return out
-
-func _make_profile(profile: Array) -> ActualizedProfile:
-	var actualized_profile = ActualizedProfile.new()
-	actualized_profile.profile = profile
-	return actualized_profile
 
 func _on_ollama_client_startup_finished(ok: bool) -> void:
 	assert(ok, "OllamaClient failed to start, which is required for AspectLibrary")
