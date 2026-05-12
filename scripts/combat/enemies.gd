@@ -1,6 +1,8 @@
 extends Node
 class_name Enemies
 
+const SPELL_CASTING_SCRIPT = preload("res://scripts/core/spell_casting.gd")
+
 @onready var ollama_client: OllamaClient = $"../../SpellCasting/OllamaClient"
 @onready var spell_runtime: SpellCasting = $"../../SpellCasting"
 @onready var vector_math: VectorMath = $"../../SpellCasting/VectorMath"
@@ -14,6 +16,9 @@ class EnemyDefinition extends RefCounted:
 	var player_victory_conditions: Array = []
 	var player_loss_conditions: Array = []
 	var descriptor: Array = []
+
+	func random_spell() -> SpellCasting.EnemySpell:
+		return spells[randi_range(0, spells.size() - 1)]
 
 var enemies: Dictionary = {}
 
@@ -44,9 +49,9 @@ func load_enemy(enemy_name: String) -> EnemyDefinition:
 	var parsed_spells: Array = []
 	for spell_dict in source["spells"]:
 		parsed_spells.append(
-			spell_runtime.create_enemy_spell(
+			SPELL_CASTING_SCRIPT.EnemySpell.new(
 				int(spell_dict["damage"]),
-				spell_runtime.create_spell(str(spell_dict["name"]))
+				SPELL_CASTING_SCRIPT.Spell.new(str(spell_dict["name"]))
 			)
 		)
 	out.spells = parsed_spells
@@ -61,13 +66,11 @@ func get_enemy(enemy_name: String) -> EnemyDefinition:
 	enemies[enemy_id] = enemy
 	return enemy
 
-func get_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.EnemySpell:
-	return enemy_def.spells[randi_range(0, enemy_def.spells.size() - 1)]
-
 func cast_random_spell(enemy_def: EnemyDefinition) -> SpellCasting.EnemySpell:
-	return await spell_runtime.cast_spell(get_random_spell(enemy_def))
+	return await spell_runtime.cast_spell(enemy_def.random_spell())
 
 func effective_resonance(enemy: EnemyDefinition, embedding: Array) -> float:
+	return 1.0
 	return vector_math.resonance(
 		embedding,
 		enemy.descriptor,

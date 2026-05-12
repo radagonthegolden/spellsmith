@@ -41,7 +41,7 @@
     "max_descriptor_resonance": 1.0,
     "player_victory_conditions": [
       {
-        "aspect": "Fade",
+        "aspect": "Drift",
         "intensity": 6
       }
     ],

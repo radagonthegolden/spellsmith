@@ -5,8 +5,23 @@ signal startup_finished(success: bool)
 
 class AspectDefinition extends RefCounted:
 	var name: String = ""
-	var phrases: Array = []
+	var positive_phrases: Array = []
+	var negative_phrases: Array = []
 	var embedding: Array = []
+	var negative_embedding: Array = []
+
+	func _init(
+		aspect_name: String = "",
+		aspect_positive_phrases: Array = [],
+		aspect_embedding: Array = [],
+		aspect_negative_phrases: Array = [],
+		aspect_negative_embedding: Array = []
+	) -> void:
+		name = aspect_name
+		positive_phrases = aspect_positive_phrases
+		embedding = aspect_embedding
+		negative_phrases = aspect_negative_phrases
+		negative_embedding = aspect_negative_embedding
 
 class ActualizedAspect extends RefCounted:
 	var name: String = ""
@@ -14,19 +29,56 @@ class ActualizedAspect extends RefCounted:
 	var intensity_rank: int = 0
 	var intensity_label: String = "faint"
 
-const INTENSITY_LOW_THRESHOLD: float = 0.10
+	func _init(
+		aspect_name: String = "",
+		aspect_score: float = 0.0,
+		low_threshold: float = 0.10,
+		medium_threshold: float = 0.25,
+		high_threshold: float = 0.35
+	) -> void:
+		name = aspect_name
+		score = aspect_score
+
+		if aspect_score >= high_threshold:
+			intensity_rank = 3
+		elif aspect_score >= medium_threshold:
+			intensity_rank = 2
+		elif aspect_score >= low_threshold:
+			intensity_rank = 1
+		else:
+			intensity_rank = 0
+
+		if intensity_rank == 3:
+			intensity_label = "high"
+		elif intensity_rank == 2:
+			intensity_label = "medium"
+		elif intensity_rank == 1:
+			intensity_label = "low"
+		else:
+			intensity_label = "faint"
+
+	func _to_string() -> String:
+		return name + " " + str(intensity_rank) + "d"
+
+	func roll(dice_sides: int = 6) -> Dictionary:
+		var results: Array = []
+		for _i in range(intensity_rank):
+			results.append(randi_range(1, dice_sides))
+		return {
+			"results": results,
+			"total": results.reduce(func(accum, number): return accum + number, 0)
+		}
+
+const INTENSITY_LOW_THRESHOLD: float = 0.15
 const INTENSITY_MEDIUM_THRESHOLD: float = 0.25
 const INTENSITY_HIGH_THRESHOLD: float = 0.35
-
-const DICE_SIDES: int = 6
 
 @export var aspects_file_path: String = "res://data/aspects.json"
 
 @export var DEFAULT_PENALTY_LENGTH: int = 4
 @export var DEFAULT_PENALTY_FACTOR: float = 0.7
 @export var DEFAULT_PENALTY_FLOOR: float = 0.5
-
-@export var softmax_temperature: float = 0.2
+@export var SOFTMAX_TEMPERATURE: float = 0.3
 
 @onready var ollama_client: OllamaClient = $"../OllamaClient"
 @onready var vector_math: VectorMath = $"../VectorMath"
@@ -35,7 +87,7 @@ var is_ready: bool = false
 var DEFINITIONS : Dictionary = {}
 
 func embedding_to_profile(embedding: Array, factor: float = 1.0, keep_top: bool = false) -> Array:
-	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS)
+	var scores := vector_math.get_sorted_scores(embedding, DEFINITIONS, SOFTMAX_TEMPERATURE)
 
 	scores = [scores[0]] if keep_top else scores
 
@@ -45,79 +97,25 @@ func embedding_to_profile(embedding: Array, factor: float = 1.0, keep_top: bool 
 	})
 	var profile: Array = []
 	for entry in scaled_data:
-		var actualized := _make_actualized(entry["name"], entry["score"])
+		var actualized := ActualizedAspect.new(
+			entry["name"],
+			entry["score"],
+			INTENSITY_LOW_THRESHOLD,
+			INTENSITY_MEDIUM_THRESHOLD,
+			INTENSITY_HIGH_THRESHOLD
+		)
 		if actualized.intensity_rank > 0:
 			profile.append(actualized)
 	return profile
 
 func get_raw_scores(embedding: Array) -> Array:
-	return vector_math.get_sorted_scores(embedding, DEFINITIONS)
+	return vector_math.get_sorted_scores(embedding, DEFINITIONS, SOFTMAX_TEMPERATURE)
 
 func get_aspect_names() -> PackedStringArray:
 	var names := []
 	for definition in DEFINITIONS.values():
 		names.append(definition.name)
 	return names
-
-func profile_to_string(profile: Array) -> String:
-	var parts: Array = []
-	for entry in profile:
-		parts.append(entry.name + " " + str(entry.intensity_rank) + "d")
-	return ", ".join(parts)
-
-func profile_to_rolls(profile: Array) -> Dictionary:
-	var out := {}
-	for definition in DEFINITIONS.values():
-		out[definition.name] = {"results": [], "total": 0}
-
-	for aspect in profile:
-		var results: Array = []
-		for _i in range(aspect.intensity_rank):
-			results.append(_roll_dice())
-		out[aspect.name] = {
-			"results": results,
-			"total": results.reduce(func(accum, number): return accum + number, 0)
-		}
-
-	for aspect_name in out.keys():
-		if out[aspect_name]["total"] == 0:
-			out.erase(aspect_name)
-
-	return out
-
-func rolls_to_string(rolls: Dictionary) -> String:
-	var parts: Array = []
-	for aspect_name in rolls.keys().filter(func(name): return rolls[name]["results"].size() > 0):
-		parts.append(
-			"%s: %dd -> %s" % [
-				aspect_name,
-				rolls[aspect_name]["results"].size(),
-				"+".join(rolls[aspect_name]["results"].map(func(num): return str(num)))
-			]
-		)
-	return ", ".join(parts)
-
-func _make_actualized(aspect_name: String, aspect_score: float) -> ActualizedAspect:
-	var out: ActualizedAspect = ActualizedAspect.new()
-	out.name = aspect_name
-	out.score = aspect_score
-	if aspect_score >= INTENSITY_HIGH_THRESHOLD:
-		out.intensity_rank = 3
-	elif aspect_score >= INTENSITY_MEDIUM_THRESHOLD:
-		out.intensity_rank = 2
-	elif aspect_score >= INTENSITY_LOW_THRESHOLD:
-		out.intensity_rank = 1
-	else:
-		out.intensity_rank = 0
-	if out.intensity_rank == 3:
-		out.intensity_label = "high"
-	elif out.intensity_rank == 2:
-		out.intensity_label = "medium"
-	elif out.intensity_rank == 1:
-		out.intensity_label = "low"
-	else:
-		out.intensity_label = "faint"
-	return out
 
 func _load_aspect_data(file_path: String) -> Dictionary:
 	assert(FileAccess.file_exists(file_path), "Aspect file not found: " + file_path)
@@ -134,8 +132,14 @@ func _load_aspect_data(file_path: String) -> Dictionary:
 
 	return json.data
 
-func _embed_aspect(aspect_name: String, phrases: Array) -> Array:
-	var embeddings: Array = await ollama_client.embed(phrases, "Aspect embedding: " + aspect_name)
+func _embed_aspect(aspect_name: String, phrases: Array, polarity: String) -> Array:
+	if phrases.is_empty():
+		return []
+
+	var embeddings: Array = await ollama_client.embed(
+		phrases,
+		"Aspect %s embedding: %s" % [polarity, aspect_name]
+	)
 	assert(not embeddings.is_empty(), "Empty embeddings for aspect: " + aspect_name)
 
 	var weights: Array = []
@@ -164,13 +168,6 @@ func get_length_penalty_factor(text: String) -> float:
 
 	return max(penalization_factor, DEFAULT_PENALTY_FLOOR)
 
-func _make_definition(aspect_name: String, aspect_phrases: Array, aspect_embedding: Array) -> AspectDefinition:
-	var out: AspectDefinition = AspectDefinition.new()
-	out.name = aspect_name
-	out.phrases = aspect_phrases
-	out.embedding = aspect_embedding
-	return out
-
 func _on_ollama_client_startup_finished(ok: bool) -> void:
 	assert(ok, "OllamaClient failed to start, which is required for AspectLibrary")
 	is_ready = false
@@ -181,16 +178,19 @@ func _on_ollama_client_startup_finished(ok: bool) -> void:
 
 	for aspect_name_variant in raw_aspect_data.keys():
 		var aspect_name: String = str(aspect_name_variant)
-		var phrases: Array = raw_aspect_data[aspect_name]
-		var aspect_embedding: Array = await _embed_aspect(aspect_name, phrases)
+		var aspect_data: Dictionary = raw_aspect_data[aspect_name]
+		var positive_phrases: Array = aspect_data.get("positive", [])
+		var negative_phrases: Array = aspect_data.get("negative", [])
+		var aspect_embedding: Array = await _embed_aspect(aspect_name, positive_phrases, "positive")
+		var negative_embedding: Array = await _embed_aspect(aspect_name, negative_phrases, "negative")
 		assert(not aspect_embedding.is_empty(), "Aspect embedding cannot be empty for aspect: " + aspect_name)
-		DEFINITIONS[aspect_name] = _make_definition(aspect_name, phrases, aspect_embedding)
+		DEFINITIONS[aspect_name] = AspectDefinition.new(
+			aspect_name,
+			positive_phrases,
+			aspect_embedding,
+			negative_phrases,
+			negative_embedding
+		)
 
 	is_ready = true
 	startup_finished.emit(true)
-
-func _roll_dice(dice_count: int = 1) -> int:
-	var total := 0
-	for _i in range(dice_count):
-		total += randi_range(1, DICE_SIDES)
-	return total

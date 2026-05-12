@@ -1,14 +1,24 @@
 extends Node
 class_name VectorMath
 
-func get_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
-	var target_vectors: Dictionary = {}
-	for key in target_definitions:
-		target_vectors[key] = target_definitions[key].embedding
-	return _centered_scores(source_embedding, target_vectors)
+const NEGATIVE_SENTENCE_WEIGHT: float = 0.5
 
-func get_sorted_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
+func get_scores(source_embedding: Array, target_definitions: Dictionary) -> Array:
+	var scores: Array = []
+	for key in target_definitions:
+		var definition = target_definitions[key]
+		var positive_score := _cosine_similarity(source_embedding, definition.embedding)
+		var negative_score := 0.0 if definition.negative_embedding.is_empty() else _cosine_similarity(source_embedding, definition.negative_embedding)
+		scores.append({
+			"name": key,
+			"score": positive_score - negative_score * NEGATIVE_SENTENCE_WEIGHT
+		})
+	return scores
+
+func get_sorted_scores(source_embedding: Array, target_definitions: Dictionary, temperature: float = 0.0) -> Array:
 	var scores: Array = get_scores(source_embedding, target_definitions)
+	if temperature > 0.0:
+		scores = _softmax(scores, temperature)
 	scores.sort_custom(func(a, b): return a["score"] > b["score"])
 	return scores
 
@@ -39,39 +49,6 @@ func resonance(embedding: Array, descriptor: Array, min_resonance: float, max_re
 
 # Private helper functions
 
-func _mean(vectors: Dictionary) -> Array:
-	var first_vec: Array = vectors.values()[0]
-	var dim: int = first_vec.size()
-	var mean: Array = []
-	mean.resize(dim)
-	mean.fill(0.0)
-
-	var count: int = 0
-	for vec in vectors.values():
-		for i in range(dim):
-			mean[i] += float(vec[i])
-		count += 1
-
-	for i in range(dim):
-		mean[i] /= float(count)
-	return mean
-
-func _centered_scores(source_embedding: Array, target_vectors: Dictionary) -> Array:
-	var target_mean: Array = _mean(target_vectors)
-	var centered_source: Array = _subtract(source_embedding, target_mean)
-	var scores := []
-	for target_name in target_vectors:
-		var centered_target: Array = _subtract(target_vectors[target_name], target_mean)
-		scores.append({"name": target_name, "score": _cosine_similarity(centered_source, centered_target)})
-	return scores
-
-func _subtract(a: Array, b: Array) -> Array:
-	var out: Array = []
-	out.resize(a.size())
-	for i in range(a.size()):
-		out[i] = float(a[i]) - float(b[i])
-	return out
-
 func _cosine_similarity(a: Array, b: Array) -> float:
 	var dot: float = 0.0
 	var norm_a: float = 0.0
@@ -88,25 +65,22 @@ func _cosine_similarity(a: Array, b: Array) -> float:
 		return 0.0
 	return dot / (sqrt(norm_a) * sqrt(norm_b))
 
-func _softmax(scores: Dictionary, temperature: float = 1.0) -> Dictionary:
-	var temp := maxf(temperature, 0.001)
+func _softmax(scores: Array, temperature: float) -> Array:
 	var max_score := -INF
+	for entry in scores:
+		max_score = max(max_score, float(entry["score"]))
 
-	for value in scores.values():
-		max_score = max(max_score, float(value))
-
-	var exps := {}
+	var exps: Array = []
 	var total := 0.0
+	for entry in scores:
+		var value := exp((float(entry["score"]) - max_score) / temperature)
+		exps.append(value)
+		total += value
 
-	for key in scores:
-		var e := exp((float(scores[key]) - max_score) / temp)
-		exps[key] = e
-		total += e
-
-	if total <= 0.0:
-		return exps
-
-	for key in exps:
-		exps[key] /= total
-
-	return exps
+	var normalized: Array = []
+	for i in range(scores.size()):
+		normalized.append({
+			"name": scores[i]["name"],
+			"score": exps[i] / total
+		})
+	return normalized

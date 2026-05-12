@@ -11,7 +11,6 @@ signal combat_finished(player_won: bool)
 @onready var enemy_library: Enemies = $Enemies
 @onready var aspect_library: Aspects = $"../SpellCasting/AspectLibrary"
 
-const DICE_SIDES: int = 6
 const CONTEXT_MAX_VALUE: int = 6
 enum TurnResult { PLAYER_WON, ENEMY_WON, ONGOING }
 
@@ -64,19 +63,14 @@ func submit_spell(spell_name: String) -> TurnResult:
 		current_enemy
 	)
 
-	var player_rolls = spell_casting.aspect_library.profile_to_rolls(
-		player_spell.profile
-	)
-
-	var enemy_rolls = spell_casting.aspect_library.profile_to_rolls(
-		prepared_enemy_spell.profile
-	)
+	var player_rolls = player_spell.profile_to_rolls()
+	var enemy_rolls = prepared_enemy_spell.profile_to_rolls()
 
 	ui.log_line(
 		"You cast \"%s\" with resonance %s, invoking %s." % [
 			spell_name,
 			str(snappedf(player_spell.resonance, 0.01)),
-			spell_casting.aspect_library.rolls_to_string(player_rolls)
+			player_spell.rolls_to_string(player_rolls)
 		]
 	)
 
@@ -84,12 +78,12 @@ func submit_spell(spell_name: String) -> TurnResult:
 		"%s casts %s, invoking %s" % [
 			opponent.display_name,
 			prepared_enemy_spell.name,
-			spell_casting.aspect_library.rolls_to_string(enemy_rolls)
+			prepared_enemy_spell.rolls_to_string(enemy_rolls)
 		])
 
 	var context_update: Dictionary = _update_context(player_spell.profile)
 	var turn_summary: String = ""
-	var enemy_aspect: String = prepared_enemy_spell.profile[0].name
+	var enemy_aspect: String = prepared_enemy_spell.primary_aspect_name()
 
 	combat_notes.player_spell = player_spell
 	combat_notes.enemy_spell = prepared_enemy_spell
@@ -104,7 +98,7 @@ func submit_spell(spell_name: String) -> TurnResult:
 		return TurnResult.PLAYER_WON
 
 	var player_died := false
-	if player_rolls[enemy_aspect]["total"] < enemy_rolls[enemy_aspect]["total"]:
+	if player_spell.roll_total_for(player_rolls, enemy_aspect) < prepared_enemy_spell.roll_total_for(enemy_rolls, enemy_aspect):
 		player_died = player.take_damage(prepared_enemy_spell.damage)
 		ui.log_line("%s breaks through for %d damage." % \
 			[prepared_enemy_spell.name, prepared_enemy_spell.damage])
@@ -112,11 +106,11 @@ func submit_spell(spell_name: String) -> TurnResult:
 		if player_died:
 			ui.log_line("Your health is spent.")
 	else:
-		ui.log_line("Your %s nullifies %s (rolled %s over %s in %s" % [
+		ui.log_line("Your %s nullifies %s (rolled %s over %s in %s)." % [
 			player_spell.name,
 			prepared_enemy_spell.name,
-			player_rolls[enemy_aspect]["total"],
-			enemy_rolls[enemy_aspect]["total"],
+			player_spell.roll_total_for(player_rolls, enemy_aspect),
+			prepared_enemy_spell.roll_total_for(enemy_rolls, enemy_aspect),
 			enemy_aspect
 		])
 		turn_summary = "Spell nullified"
@@ -155,7 +149,7 @@ func _prepare_enemy_spell(enemy: Enemies.EnemyDefinition) -> SpellCasting.EnemyS
 		"%s prepares to cast %s. Pattern: %s. Damage: %d." % [
 			opponent.display_name,
 			next_enemy_spell.name,
-			spell_casting.aspect_library.profile_to_string(next_enemy_spell.profile),
+			str(next_enemy_spell),
 			next_enemy_spell.damage
 		]
 	)

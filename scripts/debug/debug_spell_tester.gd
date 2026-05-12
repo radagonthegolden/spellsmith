@@ -45,19 +45,21 @@ func _on_cast(text: String) -> void:
 	_lock_ui("Embedding...")
 	var spell: SpellCasting.Spell = await spell_casting.cast_spell(text)
 	_render_single(
-		text,
+		spell,
 		spell.actualized,
 		spell_casting.aspect_library.get_length_penalty_factor(text)
 	)
 	_unlock_ui("Ready - enter a spell phrase to test")
 
-func _render_single(spell: String, final_scores: Array, penalty: float) -> void:
+func _render_single(spell: SpellCasting.Spell, final_scores: Array, penalty: float) -> void:
 	var lines: Array[String] = []
-	lines.append('[b]"%s"[/b]' % spell)
+	lines.append('[b]"%s"[/b]' % spell.name)
 	lines.append("Penalty: [b]%.3f[/b]   entropy: [b]%.3f[/b]" % [
 		penalty,
 		_entropy(final_scores),
 	])
+	lines.append("Softmax temperature: [b]%.3f[/b]" % spell_casting.aspect_library.SOFTMAX_TEMPERATURE)
+	lines.append("Profile: [b]%s[/b]" % str(spell))
 	lines.append("")
 
 	for entry in final_scores:

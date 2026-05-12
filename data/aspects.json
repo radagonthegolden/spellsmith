@@ -1,88 +1,212 @@
 {
-  "Call": [
-    "the proper name that forces a hidden thing into presence",
-    "address that reaches its true object and compels an answer",
-    "speech that reveals by naming what something really is",
-    "invocation, testimony, and recognition made operative",
-    "the fitting word that strips illusion and makes truth answerable",
-    "a declaration so exact that vagueness can no longer survive",
-    "language as witness, summoning what was concealed into clarity",
-    "to call a thing rightly and restore it to its proper place",
-    "glorious adressing",
-    "precise imposition",
-    "excellent enunciation",
-    "creation of terms", "neologism"
-  ],
-  "Veil": [
-    "concealment that protects by refusing full availability",
-    "hiddenness that is present, meaningful, and not yet surrendered",
-    "the obscurity that preserves depth from premature exposure",
-    "silence, secrecy, and inwardness gathered under one shadow",
-    "a mask that guards rather than merely deceives",
-    "the dream's power to imply without fully disclosing",
-    "sacred reserve against greedy understanding",
-    "what remains half-seen because revelation is not always kindness",
-    "whispered truth", "gossiped secrets", "double senses",
-    "semi-transparent thought", "unclear reasonings"
-  ],
-  "Media": [
-    "that through which meaning passes across separation",
-    "the channel that carries relation without erasing difference",
-    "translation, transmission, and contact made possible by a living middle",
-    "the bridge of sign, rite, water, or symbol between divided things",
-    "what makes a boundary traversable without denying the boundary",
-    "the conduit by which thought survives the journey between minds and worlds",
-    "all means by which the distant becomes communicable",
-    "the force of connection itself, neither source nor destination but the way between",
-    "transmittions of meaning", "interchange of opinions",
-    "boundless options", "spreading the word", "traversal of meaning"
-  ],
-  "Figure": [
-    "shape held clearly enough to remain itself",
-    "coherence, boundary, and pattern preserved against confusion",
-    "the stable form by which identity becomes legible and endures",
-    "containment that allows a thing to exist as a distinct presence",
-    "the structure that keeps a role, body, or thought from coming apart",
-    "law, outline, and proportion gathered into durable relation",
-    "what binds scattered parts into one recognizable whole",
-    "the integrity by which a thing persists instead of dissolving",
-    "setting of meaning", "sedimenting meaning", "bounderies in truth",
-    "hardlining, definitions", "cementing of concepts"
-  ],
-  "Drift": [
-    "meaning that slides into another shape without fully breaking",
-    "the slippage by which a word, self, or role becomes otherwise",
-    "semantic drift, dream metamorphosis, and unstable identity",
-    "change by displacement, reinterpretation, and altered relation",
-    "the current that carries forms into new uses and stranger recognitions",
-    "the dream's habit of letting one thing become another by degrees",
-    "the loosening of categories, names, and fixed meanings",
-    "transformation hidden inside every stable form",
-    "drifting meanings", "changing and morphing", "evolution and regression",
-    "mimicry, unalignment", "odd and unepexcted shapes", "remouval of limits"
-  ],
-  "Echo": [
-    "what returns after the first saying and continues to act",
-    "repetition as resonance, memory, and altered recurrence",
-    "the lingering force of words, rites, and wounds that keep sounding",
-    "a reflected voice that becomes refrain, tradition, or haunting",
-    "memory made active as response and return",
-    "what survives by being called back again",
-    "the after-sound of a truth or promise that does not end cleanly",
-    "resonance that binds separated moments into one pattern",
-    "remembering and recalling", "tracing back", "lineage and ancestry",
-    "that old echo", "returning from afar", "voices in the silence"
-  ],
-  "Fade": [
-    "meaning thinning out until it can no longer bear its old weight",
-    "the quiet erosion by which names, forms, and memories lose their hold",
-    "forgetting as gradual dimming into distance",
-    "a force weakening until only a pale trace remains",
-    "the slow recession of clarity, structure, and significance",
-    "what is not destroyed but allowed to slip beyond effective grasp",
-    "language worn smooth until its old force can no longer be felt",
-    "the long diminishment by which things pass from presence into near-loss",
-    "gradual erosion of meaning", "slow oblivion", "forgetfullness and void",
-    "undeniably gone, never to be seen again", "death and dissolution", "no more"
-  ]
+  "Call": {
+    "positive": [
+      "the proper name that forces a hidden thing into presence",
+      "address that reaches its true object and compels an answer",
+      "speech that reveals by naming what something really is",
+      "invocation, testimony, and recognition made operative",
+      "the fitting word that strips illusion and makes truth answerable",
+      "a declaration so exact that vagueness can no longer survive",
+      "language as witness, summoning what was concealed into clarity",
+      "to call a thing rightly and restore it to its proper place",
+      "glorious adressing",
+      "precise imposition",
+      "excellent enunciation",
+      "creation of terms",
+      "neologism"
+    ],
+    "negative": [
+      "mere stable shape without naming",
+      "coherence without speech",
+      "silent structure and rigid boundaries",
+      "containment, law, and fixed outline without revelation",
+      "hiddenness kept hidden rather than exposed",
+      "obscurity, secrecy, and withholding",
+      "gradual forgetting, erosion, and dimming",
+      "repetition, ancestry, and memory returning",
+      "translation, transmission, and crossing between separate things",
+      "metamorphosis, slippage, and unstable change"
+    ]
+  },
+  "Veil": {
+    "positive": [
+      "concealment that protects by refusing full availability",
+      "hiddenness that is present, meaningful, and not yet surrendered",
+      "the obscurity that preserves depth from premature exposure",
+      "silence, secrecy, and inwardness gathered under one shadow",
+      "a mask that guards rather than merely deceives",
+      "the dream's power to imply without fully disclosing",
+      "sacred reserve against greedy understanding",
+      "what remains half-seen because revelation is not always kindness",
+      "whispered truth",
+      "gossiped secrets",
+      "double senses",
+      "semi-transparent thought",
+      "unclear reasonings",
+      "indiciensies and taboo topics",
+      "succulent and elgant thoughts and words not revealed",
+      "obscuring and hiding"
+    ],
+    "negative": [
+      "full revelation through exact naming",
+      "the proper word that exposes and clarifies",
+      "public declaration and witness",
+      "gradual loss, fading, and forgetting rather than concealment",
+      "erosion into absence instead of guarded hiddenness",
+      "stable form, boundary, and clear definition",
+      "transmission, bridge-building, and communication across divides",
+      "repetition and haunting recurrence",
+      "open transformation and visible metamorphosis",
+      "what is gone rather than what is withheld"
+    ]
+  },
+  "Media": {
+    "positive": [
+      "that through which meaning passes across separation",
+      "the channel that carries relation without erasing difference",
+      "translation, transmission, and contact made possible by a living middle",
+      "the bridge of sign, rite, water, or symbol between divided things",
+      "what makes a boundary traversable without denying the boundary",
+      "the conduit by which thought survives the journey between minds and worlds",
+      "all means by which the distant becomes communicable",
+      "the force of connection itself, neither source nor destination but the way between",
+      "transmittions of meaning",
+      "interchange of opinions",
+      "boundless options",
+      "spreading the word",
+      "traversal of meaning"
+    ],
+    "negative": [
+      "the exact name that reveals a thing directly",
+      "pure concealment and sacred reserve",
+      "static form, fixed outline, and immobile definition",
+      "mere boundary without crossing",
+      "internal coherence without relation",
+      "drift into another meaning rather than passage between meanings",
+      "echoed recurrence instead of transmission onward",
+      "fading, recession, and loss of contact",
+      "self-contained identity with no bridge to others",
+      "a thing remaining in place rather than being carried across"
+    ]
+  },
+  "Figure": {
+    "positive": [
+      "shape held clearly enough to remain itself",
+      "coherence, boundary, and pattern preserved against confusion",
+      "the stable form by which identity becomes legible and endures",
+      "containment that allows a thing to exist as a distinct presence",
+      "the structure that keeps a role, body, or thought from coming apart",
+      "law, outline, and proportion gathered into durable relation",
+      "what binds scattered parts into one recognizable whole",
+      "the integrity by which a thing persists instead of dissolving",
+      "definitions, truths, concrete concepts and clear identities",
+      "setting of meaning",
+      "sedimenting meaning",
+      "bounderies in truth",
+      "hardlining, definitions",
+      "cementing of concepts"
+    ],
+    "negative": [
+      "the exact word that calls and reveals",
+      "speech, naming, and direct address",
+      "concealment, masking, and sacred hiddenness",
+      "bridges, channels, and transmission across divides",
+      "slippage, metamorphosis, and unstable reinterpretation",
+      "repetition, haunting, and recurring traces",
+      "dimming, erosion, and quiet disappearance",
+      "ambiguity without boundary",
+      "drifting identity and loosened categories",
+      "a thing changing or fading rather than holding together"
+    ]
+  },
+  "Drift": {
+    "positive": [
+      "meaning that slides into another shape without fully breaking",
+      "the slippage by which a word, self, or role becomes otherwise",
+      "semantic drift, dream metamorphosis, and unstable identity",
+      "change by displacement, reinterpretation, and altered relation",
+      "the current that carries forms into new uses and stranger recognitions",
+      "the dream's habit of letting one thing become another by degrees",
+      "the loosening of categories, names, and fixed meanings",
+      "transformation hidden inside every stable form",
+      "drifting meanings",
+      "changing and morphing",
+      "evolution and regression",
+      "mimicry, unalignment",
+      "odd and unepexcted shapes",
+      "remouval of limits"
+    ],
+    "negative": [
+      "stable shape, fixed role, and durable boundary",
+      "exact naming and proper address",
+      "clear revelation rather than slippage",
+      "concealment that preserves instead of transforms",
+      "bridging and translation without altering identity",
+      "repetition and faithful return",
+      "gradual erosion and weakening into absence",
+      "law, proportion, and coherence",
+      "a thing remaining itself under pressure",
+      "simple disappearance instead of becoming otherwise"
+    ]
+  },
+  "Echo": {
+    "positive": [
+      "what returns after the first saying and continues to act",
+      "repetition as resonance, memory, and altered recurrence",
+      "the lingering force of words, rites, and wounds that keep sounding",
+      "a reflected voice that becomes refrain, tradition, or haunting",
+      "memory made active as response and return",
+      "what survives by being called back again",
+      "the after-sound of a truth or promise that does not end cleanly",
+      "resonance that binds separated moments into one pattern",
+      "remembering and recalling",
+      "tracing back",
+      "lineage and ancestry",
+      "that old echo",
+      "returning from afar",
+      "voices in the silence"
+    ],
+    "negative": [
+      "the first naming that brings something forth directly",
+      "direct invocation without recurrence",
+      "hiddenness and guarded secrecy",
+      "transmission onward instead of return",
+      "stable form without reverberation",
+      "transformation into something new rather than recurrence",
+      "fading, oblivion, and erosion of memory",
+      "the final disappearance of names and traces",
+      "crossing a divide instead of answering back across it",
+      "a thing ending cleanly rather than continuing to sound"
+    ]
+  },
+  "Fade": {
+    "positive": [
+      "meaning thinning out until it can no longer bear its old weight",
+      "the quiet erosion by which names, forms, and memories lose their hold",
+      "forgetting as gradual dimming into distance",
+      "a force weakening until only a pale trace remains",
+      "the slow recession of clarity, structure, and significance",
+      "what is not destroyed but allowed to slip beyond effective grasp",
+      "language worn smooth until its old force can no longer be felt",
+      "the long diminishment by which things pass from presence into near-loss",
+      "gradual erosion of meaning",
+      "slow oblivion",
+      "forgetfullness and void",
+      "undeniably gone, never to be seen again",
+      "death and dissolution",
+      "no more"
+    ],
+    "negative": [
+      "hiddenness that remains intact and protected",
+      "concealment without loss",
+      "exact naming, revelation, and direct address",
+      "transmission, crossing, and successful connection",
+      "stable shape and durable coherence",
+      "metamorphosis and altered becoming",
+      "return, refrain, and living memory",
+      "haunting recurrence instead of disappearance",
+      "a guarded secret rather than a forgotten one",
+      "something preserved in shadow instead of worn away"
+    ]
+  }
 }
